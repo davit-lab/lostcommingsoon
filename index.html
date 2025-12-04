@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ka" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coming Soon</title>
+
+    <style>
+        :root {
+            --bg-dark: #0b0b0b;
+            --text-dark: #ffffff;
+            --card-dark: rgba(255,255,255,0.06);
+            --border-dark: rgba(255,255,255,0.15);
+
+            --bg-light: #f5f5f5;
+            --text-light: #111;
+            --card-light: rgba(0,0,0,0.05);
+            --border-light: rgba(0,0,0,0.15);
+        }
+
+        /* THEME SWITCHING */
+        [data-theme="dark"] {
+            --bg: var(--bg-dark);
+            --text: var(--text-dark);
+            --card: var(--card-dark);
+            --border: var(--border-dark);
+        }
+
+        [data-theme="light"] {
+            --bg: var(--bg-light);
+            --text: var(--text-light);
+            --card: var(--card-light);
+            --border: var(--border-light);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:25px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            width:100%;
+            max-width:600px;
+            background: var(--card);
+            border:1px solid var(--border);
+            padding:50px 35px;
+            border-radius:14px;
+            backdrop-filter:blur(10px);
+            transition:0.4s;
+            position:relative;
+        }
+
+        /* THEME SWITCH BUTTON */
+        .theme-btn {
+            position:absolute;
+            top:15px;
+            right:15px;
+            background: var(--card);
+            border:1px solid var(--border);
+            border-radius:8px;
+            padding:6px 12px;
+            cursor:pointer;
+            transition:0.2s;
+        }
+        .theme-btn:hover { opacity:0.8; }
+
+        /* 3D LOGO */
+        .logo-3d {
+            width:140px;
+            height:140px;
+            margin:0 auto 35px;
+            border-radius:18px;
+            background: var(--card);
+            border:1px solid var(--border);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            overflow:hidden;
+            transition: transform 0.2s;
+            transform-style:preserve-3d;
+            cursor:pointer;
+        }
+
+        .logo-3d img {
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            pointer-events:none;
+        }
+
+        #logoInput {
+            display:none;
+        }
+
+        h1 {
+            text-align:center;
+            font-size:38px;
+            margin-bottom:12px;
+        }
+
+        .status {
+            margin:0 auto 25px;
+            width:fit-content;
+            padding:7px 16px;
+            border-radius:22px;
+            font-size:14px;
+            display:flex;
+            align-items:center;
+            gap:7px;
+            background:rgba(59,130,246,0.15);
+            border:1px solid rgba(59,130,246,0.3);
+            color:#60a5fa;
+        }
+
+        .status-dot {
+            width:8px;
+            height:8px;
+            background:#60a5fa;
+            border-radius:50%;
+            animation:pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%,100%{opacity:1;}
+            50%{opacity:0.2;}
+        }
+
+        .subtitle {
+            text-align:center;
+            opacity:0.6;
+            margin-bottom:30px;
+        }
+
+        /* TIMER */
+        .timer {
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:12px;
+            margin:35px 0;
+        }
+
+        .timer-box {
+            background:var(--card);
+            border:1px solid var(--border);
+            padding:18px;
+            border-radius:10px;
+            text-align:center;
+            backdrop-filter:blur(5px);
+        }
+
+        .timer-num {
+            font-size:32px;
+            font-weight:600;
+        }
+
+        /* FORM */
+        .form-group {
+            display:flex;
+            gap:10px;
+            margin-bottom:15px;
+        }
+
+        input {
+            flex:1;
+            padding:14px 18px;
+            border-radius:10px;
+            border:1px solid var(--border);
+            background:var(--card);
+            color:var(--text);
+            outline:none;
+            transition:0.25s;
+        }
+        input:focus { border-color:#3b82f6; }
+
+        button {
+            background:#fff;
+            color:#000;
+            border:none;
+            padding:14px 24px;
+            border-radius:10px;
+            cursor:pointer;
+            transition:0.2s;
+        }
+        button:hover { transform:translateY(-2px); }
+
+        .msg {
+            padding:12px;
+            border-radius:10px;
+            display:none;
+            font-size:14px;
+        }
+
+        .success {
+            background:rgba(34,197,94,0.12);
+            border:1px solid rgba(34,197,94,0.3);
+            color:#4ade80;
+        }
+
+        .error {
+            background:rgba(239,68,68,0.12);
+            border:1px solid rgba(239,68,68,0.3);
+            color:#f87171;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- THEME SWITCH -->
+        <div class="theme-btn" id="themeBtn">☀️ / 🌙</div>
+
+        <!-- 3D LOGO -->
+        <label class="logo-3d" id="logo3d">
+            <input type="file" id="logoInput" accept="image/*">
+            <img id="logoImg" src="https://s1.ezgif.com/tmp/ezgif-1a30d9aa7d91c9fd.png">
+        </label>
+
+        <div class="status">
+            <div class="status-dot"></div>
+            In Development
+        </div>
+
+        <h1>Coming Soon</h1>
+        <p class="subtitle">საიტი მზადდება, შეგიძლია შენი Email ჩაწერო და დასრულებისას შეგატყობინებ.</p>
+
+        <div class="timer">
+            <div class="timer-box"><div id="d" class="timer-num">25</div><div>Days</div></div>
+            <div class="timer-box"><div id="h" class="timer-num">21</div><div>Hours</div></div>
+            <div class="timer-box"><div id="m" class="timer-num">25</div><div>Min</div></div>
+            <div class="timer-box"><div id="s" class="timer-num">55</div><div>Sec</div></div>
+        </div>
+
+        <div class="form-group">
+            <input type="email" id="email" placeholder="შეიყვანე Email">
+            <button id="submitBtn">დამატე</button>
+        </div>
+        <div class="msg" id="msg"></div>
+
+    </div>
+
+<script>
+/* THEME SWITCH */
+const themeBtn = document.getElementById("themeBtn");
+themeBtn.onclick = () => {
+    const html = document.documentElement;
+    html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
+};
+
+/* 3D LOGO TILT */
+const card = document.getElementById("logo3d");
+card.addEventListener("mousemove", (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width/2;
+    const y = e.clientY - rect.top - rect.height/2;
+    card.style.transform = `rotateX(${ -y/15 }deg) rotateY(${ x/15 }deg)`;
+});
+card.addEventListener("mouseleave", () => {
+    card.style.transform = "rotateX(0deg) rotateY(0deg)";
+});
+
+/* LOGO UPLOAD */
+document.getElementById("logoInput").addEventListener("change", (e)=>{
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => document.getElementById("logoImg").src = reader.result;
+    reader.readAsDataURL(file);
+});
+
+/* TIMER */
+const launch = new Date("2025-12-31T00:00:00").getTime();
+const tick = () => {
+    const now = Date.now();
+    const diff = launch - now;
+
+    const d = Math.floor(diff/(1000*60*60*24));
+    const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+    const m = Math.floor((diff%(1000*60*60))/(1000*60));
+    const s = Math.floor((diff%(1000*60))/1000);
+
+    document.getElementById("d").textContent = d.toString().padStart(2,"0");
+    document.getElementById("h").textContent = h.toString().padStart(2,"0");
+    document.getElementById("m").textContent = m.toString().padStart(2,"0");
+    document.getElementById("s").textContent = s.toString().padStart(2,"0");
+};
+setInterval(tick,1000);
+tick();
+
+/* EMAIL SAVE */
+document.getElementById("submitBtn").onclick = () => {
+    const email = document.getElementById("email").value.trim();
+    const msg = document.getElementById("msg");
+
+    if (!email.includes("@")) {
+        msg.textContent = "ემაილი არასწორია.";
+        msg.className = "msg error";
+        msg.style.display = "block";
+        return;
+    }
+
+    const list = JSON.parse(localStorage.getItem("emails") || "[]");
+    list.push({email, ts:Date.now()});
+    localStorage.setItem("emails",JSON.stringify(list));
+
+    msg.textContent = "Email წარმატებით დაემატა!";
+    msg.className = "msg success";
+    msg.style.display = "block";
+    document.getElementById("email").value = "";
+};
+</script>
+
+</body>
+</html>
