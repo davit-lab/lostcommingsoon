@@ -3,202 +3,380 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coming Soon</title>
+<title>Lost Lock საიტი - Coming Soon</title>
 
 <style>
 :root {
-    --bg-dark:#0b0b0b;
-    --text-dark:#fff;
-    --card-dark:rgba(255,255,255,0.06);
-    --border-dark:rgba(255,255,255,0.15);
-
-    --bg-light:#f5f5f5;
-    --text-light:#111;
-    --card-light:rgba(0,0,0,0.05);
-    --border-light:rgba(0,0,0,0.15);
-}
-
-[data-theme="dark"] {
-    --bg:var(--bg-dark);
-    --text:var(--text-dark);
-    --card:var(--card-dark);
-    --border:var(--border-dark);
-}
-
-[data-theme="light"] {
-    --bg:var(--bg-light);
-    --text:var(--text-light);
-    --card:var(--card-light);
-    --border:var(--border-light);
+    --primary-gold: #d4af37;
+    --secondary-gold: #f4d03f;
+    --stone-dark: #2a2419;
+    --stone-light: #4a3f2e;
+    --ocean-blue: #0a4d68;
+    --ocean-dark: #05293a;
+    --glow: rgba(212, 175, 55, 0.4);
 }
 
 * {margin:0; padding:0; box-sizing:border-box;}
 
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-20px) rotate(2deg); }
+    66% { transform: translateY(-10px) rotate(-2deg); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px var(--glow), 0 0 40px var(--glow), inset 0 0 20px rgba(212, 175, 55, 0.1); }
+    50% { box-shadow: 0 0 30px var(--glow), 0 0 60px var(--glow), inset 0 0 30px rgba(212, 175, 55, 0.2); }
+}
+
+@keyframes wave {
+    0%, 100% { transform: translateY(0) translateX(0); }
+    25% { transform: translateY(-10px) translateX(10px); }
+    75% { transform: translateY(10px) translateX(-10px); }
+}
+
+@keyframes treasure-shine {
+    0% { filter: brightness(1) drop-shadow(0 0 5px var(--primary-gold)); }
+    50% { filter: brightness(1.3) drop-shadow(0 0 15px var(--secondary-gold)); }
+    100% { filter: brightness(1) drop-shadow(0 0 5px var(--primary-gold)); }
+}
+
 body {
-    background:var(--bg);
-    color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    transition:.3s;
+    background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean-blue) 50%, #073d52 100%);
+    color: #fff;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(244, 208, 63, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    animation: wave 15s ease-in-out infinite;
 }
 
 .container {
-    width:100%;
-    max-width:520px;
-    background:var(--card);
-    border:1px solid var(--border);
-    padding:45px 28px;
-    border-radius:14px;
-    backdrop-filter:blur(8px);
-    position:relative;
+    width: 100%;
+    max-width: 680px;
+    background: linear-gradient(145deg, rgba(42, 36, 25, 0.95) 0%, rgba(74, 63, 46, 0.9) 100%);
+    border: 3px solid var(--primary-gold);
+    padding: 50px 35px;
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    position: relative;
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 40px var(--glow),
+        inset 0 0 30px rgba(212, 175, 55, 0.1);
+    animation: float 6s ease-in-out infinite;
+}
+
+.container::before,
+.container::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--primary-gold);
+    background: radial-gradient(circle, var(--secondary-gold) 0%, transparent 70%);
+}
+
+.container::before {
+    top: 15px;
+    left: 15px;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 8px 0 0 0;
+}
+
+.container::after {
+    bottom: 15px;
+    right: 15px;
+    border-left: none;
+    border-top: none;
+    border-radius: 0 0 8px 0;
 }
 
 .theme-btn {
-    position:absolute;
-    top:12px;
-    right:12px;
-    padding:6px 12px;
-    border-radius:8px;
-    background:var(--card);
-    border:1px solid var(--border);
-    cursor:pointer;
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--stone-dark), var(--stone-light));
+    border: 2px solid var(--primary-gold);
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s;
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.theme-btn:hover {
+    transform: scale(1.1) rotate(5deg);
 }
 
 .logo-3d {
-    width:120px;
-    height:120px;
-    margin:0 auto 28px;
-    border-radius:16px;
-    background:var(--card);
-    border:1px solid var(--border);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-    transform-style:preserve-3d;
-    transition:transform .15s;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 35px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, var(--stone-light), var(--stone-dark));
+    border: 4px solid var(--primary-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transition: transform .2s;
+    box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.5),
+        0 0 25px var(--glow),
+        inset 0 0 20px rgba(212, 175, 55, 0.2);
+    animation: treasure-shine 4s ease-in-out infinite;
 }
 
 .logo-3d img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-#logoInput {display:none;}
+#logoInput {display: none;}
 
 .status {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin:0 auto 20px;
-    width:max-content;
-    padding:7px 16px;
-    background:rgba(59,130,246,0.15);
-    border:1px solid rgba(59,130,246,0.3);
-    color:#60a5fa;
-    border-radius:20px;
-    font-size:14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 auto 25px;
+    width: max-content;
+    padding: 10px 22px;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(244, 208, 63, 0.15));
+    border: 2px solid var(--primary-gold);
+    color: var(--secondary-gold);
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
 }
+
 .status-dot {
-    width:8px;
-    height:8px;
-    background:#60a5fa;
-    border-radius:50%;
-    animation:pulse 2s infinite;
+    width: 10px;
+    height: 10px;
+    background: var(--secondary-gold);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 10px var(--secondary-gold);
 }
-@keyframes pulse {0%,100%{opacity:1;} 50%{opacity:0.25;}}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+}
 
 h1 {
-    text-align:center;
-    font-size:32px;
-    margin-bottom:10px;
+    text-align: center;
+    font-size: 48px;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, var(--primary-gold) 0%, var(--secondary-gold) 50%, var(--primary-gold) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+    text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+    font-weight: 800;
+    letter-spacing: 2px;
 }
 
 .subtitle {
-    text-align:center;
-    opacity:0.7;
-    margin-bottom:25px;
-    line-height:1.4;
+    text-align: center;
+    opacity: 0.9;
+    margin-bottom: 35px;
+    line-height: 1.6;
+    font-size: 17px;
+    color: #e8d4a0;
+    font-style: italic;
 }
 
 .timer {
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
-    margin:25px 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin: 35px 0;
 }
 
 .timer-box {
-    background:var(--card);
-    border:1px solid var(--border);
-    padding:12px;
-    border-radius:10px;
-    text-align:center;
+    background: linear-gradient(145deg, rgba(74, 63, 46, 0.8), rgba(42, 36, 25, 0.9));
+    border: 2px solid var(--primary-gold);
+    padding: 20px 15px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.4),
+        inset 0 0 15px rgba(212, 175, 55, 0.1);
+    transition: all 0.3s;
+}
+
+.timer-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 12px 30px rgba(0, 0, 0, 0.6),
+        0 0 20px var(--glow);
 }
 
 .timer-num {
-    font-size:22px;
-    font-weight:600;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--secondary-gold);
+    text-shadow: 0 0 10px var(--glow);
 }
 
-.timer-box div:nth-child(2){
-    font-size:12px;
-    opacity:0.7;
-}
-
-@media(max-width:420px){
-    .timer { gap:6px; }
-    .timer-box { padding:10px; }
-    .timer-num { font-size:18px; }
-    h1 { font-size:26px; }
+.timer-box div:nth-child(2) {
+    font-size: 13px;
+    opacity: 0.8;
+    color: #d4c5a0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 5px;
 }
 
 .form-group {
-    display:flex;
-    gap:10px;
-    margin-top:10px;
+    display: flex;
+    gap: 12px;
+    margin-top: 15px;
 }
 
 input {
-    flex:1;
-    padding:12px 16px;
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:var(--card);
-    color:var(--text);
+    flex: 1;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 2px solid var(--primary-gold);
+    background: rgba(42, 36, 25, 0.6);
+    color: #fff;
+    font-size: 15px;
+    transition: all 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--secondary-gold);
+    box-shadow: 0 0 20px var(--glow);
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 button {
-    background:#fff;
-    color:#000;
-    border:none;
-    padding:12px 20px;
-    border-radius:10px;
-    cursor:pointer;
+    background: linear-gradient(135deg, var(--primary-gold), var(--secondary-gold));
+    color: var(--stone-dark);
+    border: none;
+    padding: 16px 28px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(212, 175, 55, 0.6);
+}
+
+button:active {
+    transform: translateY(-1px);
+}
+
+.vr-info-btn {
+    width: 100%;
+    margin-top: 25px;
+    background: linear-gradient(135deg, #0a4d68, #073d52);
+    color: var(--secondary-gold);
+    border: 2px solid var(--primary-gold);
+    padding: 18px 30px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.vr-info-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.vr-info-btn:hover::before {
+    left: 100%;
+}
+
+.vr-icon {
+    font-size: 24px;
+    animation: float 3s ease-in-out infinite;
 }
 
 .msg {
-    display:none;
-    margin-top:15px;
-    padding:12px;
-    border-radius:10px;
-    font-size:14px;
+    display: none;
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 15px;
+    text-align: center;
+    font-weight: 600;
 }
 
 .success {
-    background:rgba(34,197,94,0.12);
-    border:1px solid rgba(34,197,94,0.3);
-    color:#4ade80;
+    background: rgba(34, 197, 94, 0.2);
+    border: 2px solid rgba(34, 197, 94, 0.5);
+    color: #4ade80;
 }
+
 .error {
-    background:rgba(239,68,68,0.12);
-    border:1px solid rgba(239,68,68,0.3);
-    color:#f87171;
+    background: rgba(239, 68, 68, 0.2);
+    border: 2px solid rgba(239, 68, 68, 0.5);
+    color: #f87171;
+}
+
+@media(max-width: 520px) {
+    h1 { font-size: 36px; }
+    .timer { gap: 8px; }
+    .timer-box { padding: 15px 10px; }
+    .timer-num { font-size: 24px; }
+    .container { padding: 40px 25px; }
+    .form-group { flex-direction: column; }
+    button { width: 100%; }
 }
 </style>
 </head>
@@ -206,7 +384,7 @@ button {
 
 <div class="container">
 
-<div class="theme-btn" id="themeBtn">☀️ / 🌙</div>
+<div class="theme-btn" id="themeBtn">🏰</div>
 
 <label class="logo-3d" id="logo3d">
     <input type="file" id="logoInput" accept="image/*">
@@ -215,11 +393,11 @@ button {
 
 <div class="status">
     <div class="status-dot"></div>
-    In Development
+    განვითარების პროცესში
 </div>
 
-<h1>Coming Soon</h1>
-<p class="subtitle">საიტი მზადდება. ჩაწერე Email და დასრულებაზე შეგატყობინებ.</p>
+<h1>FORT BOYARD VR</h1>
+<p class="subtitle">ჩაწერე Email და საიტის აწყობაზე  პირველი შეიტყობ!</p>
 
 <div class="timer">
     <div class="timer-box"><div id="d" class="timer-num">00</div><div>Days</div></div>
@@ -229,17 +407,24 @@ button {
 </div>
 
 <div class="form-group">
-    <input type="email" id="email" placeholder="შეიყვანე Email">
-    <button id="submitBtn">დამატე</button>
+    <input type="email" id="email" placeholder="შეიყვანე Email მისამართი">
+    <button id="submitBtn">📧 დამატე</button>
 </div>
+
+<button class="vr-info-btn" id="vrInfoBtn">
+    <span class="vr-icon">🥽</span>
+    <span>იხილეთ ინფორმაცია VR-ზე</span>
+</button>
+
 <div class="msg" id="msg"></div>
 
 </div>
 
 <script>
 document.getElementById("themeBtn").onclick = () => {
-    const doc = document.documentElement;
-    doc.dataset.theme = doc.dataset.theme === "dark" ? "light" : "dark";
+    const btn = document.getElementById("themeBtn");
+    const emojis = ['🏰', '⚔️', '🗝️', '💎', '🏴‍☠️', '🦅'];
+    btn.textContent = emojis[Math.floor(Math.random() * emojis.length)];
 };
 
 const logo = document.getElementById("logo3d");
@@ -247,10 +432,10 @@ logo.addEventListener("mousemove", e => {
     const r = logo.getBoundingClientRect();
     const x = e.clientX - (r.left + r.width/2);
     const y = e.clientY - (r.top + r.height/2);
-    logo.style.transform = `rotateX(${ -y/25 }deg) rotateY(${ x/25 }deg)`;
+    logo.style.transform = `perspective(1000px) rotateX(${ -y/20 }deg) rotateY(${ x/20 }deg) scale(1.05)`;
 });
 logo.addEventListener("mouseleave", () => {
-    logo.style.transform = "rotateX(0deg) rotateY(0deg)";
+    logo.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)";
 });
 
 document.getElementById("logoInput").addEventListener("change", e => {
@@ -275,27 +460,35 @@ setInterval(() => {
     document.getElementById("h").textContent = String(h).padStart(2,"0");
     document.getElementById("m").textContent = String(m).padStart(2,"0");
     document.getElementById("s").textContent = String(s).padStart(2,"0");
-},1000);
+}, 1000);
 
 document.getElementById("submitBtn").onclick = () => {
     const email = document.getElementById("email").value.trim();
     const msg = document.getElementById("msg");
 
     if (!email.includes("@")) {
-        msg.textContent = "ემაილი არასწორია.";
+        msg.textContent = "❌ ემაილი არასწორია. გთხოვთ შეიყვანოთ სწორი ფორმატი.";
         msg.className = "msg error";
         msg.style.display = "block";
         return;
     }
 
     const list = JSON.parse(localStorage.getItem("emails") || "[]");
-    list.push({email, ts:Date.now()});
+    list.push({email, ts: Date.now()});
     localStorage.setItem("emails", JSON.stringify(list));
 
-    msg.textContent = "Email წარმატებით დაემატა!";
+    msg.textContent = "✅ Email წარმატებით დაემატა! მალე შეგატყობინებთ ახალ ამბებს.";
     msg.className = "msg success";
     msg.style.display = "block";
     document.getElementById("email").value = "";
+    
+    setTimeout(() => {
+        msg.style.display = "none";
+    }, 5000);
+};
+
+document.getElementById("vrInfoBtn").onclick = () => {
+    window.location.href = "https://vrlost.vercel.app/"; 
 };
 </script>
 </body>
