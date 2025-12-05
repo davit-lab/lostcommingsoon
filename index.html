@@ -57,7 +57,6 @@ body {
     position:relative;
 }
 
-/* Theme Button */
 .theme-btn {
     position:absolute;
     top:12px;
@@ -69,7 +68,6 @@ body {
     cursor:pointer;
 }
 
-/* 3D LOGO */
 .logo-3d {
     width:120px;
     height:120px;
@@ -128,7 +126,6 @@ h1 {
     line-height:1.4;
 }
 
-/* TIMER FIXED FOR MOBILE */
 .timer {
     display:grid;
     grid-template-columns:repeat(4,1fr);
@@ -154,7 +151,6 @@ h1 {
     opacity:0.7;
 }
 
-/* MOBILE FIX */
 @media(max-width:420px){
     .timer { gap:6px; }
     .timer-box { padding:10px; }
@@ -162,7 +158,6 @@ h1 {
     h1 { font-size:26px; }
 }
 
-/* Form */
 .form-group {
     display:flex;
     gap:10px;
@@ -215,7 +210,7 @@ button {
 
 <label class="logo-3d" id="logo3d">
     <input type="file" id="logoInput" accept="image/*">
-    <img id="logoImg" src="https://s1.ezgif.com/tmp/ezgif-1a30d9aa7d91c9fd.png">
+    <img id="logoImg" src="https://scontent.ftbs5-2.fna.fbcdn.net/v/t39.30808-6/558945585_1362927199174583_3993541699945333384_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=l8aq7MfoTugQ7kNvwHeWMXg&_nc_oc=Adlz4i7BubyCtQEzbMb6Y3qNnSDzjIkKQC0A2FzwnNpN7WRY3hd4-BFuLEsH2OzpI04&_nc_zt=23&_nc_ht=scontent.ftbs5-2.fna&_nc_gid=ImHpeaq6Fwo4fyld38Mfbg&oh=00_AflsZg_Tcb-4zwOPYiC_LvNHN0_aw7rXuvrRUrMfSP76Iw&oe=69388F12">
 </label>
 
 <div class="status">
@@ -242,13 +237,11 @@ button {
 </div>
 
 <script>
-/* THEME TOGGLE */
 document.getElementById("themeBtn").onclick = () => {
     const doc = document.documentElement;
     doc.dataset.theme = doc.dataset.theme === "dark" ? "light" : "dark";
 };
 
-/* 3D LOGO TILT */
 const logo = document.getElementById("logo3d");
 logo.addEventListener("mousemove", e => {
     const r = logo.getBoundingClientRect();
@@ -260,7 +253,6 @@ logo.addEventListener("mouseleave", () => {
     logo.style.transform = "rotateX(0deg) rotateY(0deg)";
 });
 
-/* Upload */
 document.getElementById("logoInput").addEventListener("change", e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -269,7 +261,6 @@ document.getElementById("logoInput").addEventListener("change", e => {
     reader.readAsDataURL(file);
 });
 
-/* Countdown */
 const launch = new Date("2025-12-31T00:00:00").getTime();
 setInterval(() => {
     const now = Date.now();
@@ -286,7 +277,6 @@ setInterval(() => {
     document.getElementById("s").textContent = String(s).padStart(2,"0");
 },1000);
 
-/* Email */
 document.getElementById("submitBtn").onclick = () => {
     const email = document.getElementById("email").value.trim();
     const msg = document.getElementById("msg");
