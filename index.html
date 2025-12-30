@@ -1,302 +1,207 @@
 <!DOCTYPE html>
-<html lang="ka" data-theme="dark">
+<html lang="ka">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coming Soon</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coming Soon</title>
 
-<style>
-:root {
-    --bg-dark:#0b0b0b;
-    --text-dark:#fff;
-    --card-dark:rgba(255,255,255,0.06);
-    --border-dark:rgba(255,255,255,0.15);
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    --bg-light:#f5f5f5;
-    --text-light:#111;
-    --card-light:rgba(0,0,0,0.05);
-    --border-light:rgba(0,0,0,0.15);
-}
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-[data-theme="dark"] {
-    --bg:var(--bg-dark);
-    --text:var(--text-dark);
-    --card:var(--card-dark);
-    --border:var(--border-dark);
-}
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      color: #fff;
+    }
 
-[data-theme="light"] {
-    --bg:var(--bg-light);
-    --text:var(--text-light);
-    --card:var(--card-light);
-    --border:var(--border-light);
-}
+    /* Video background */
+    .video-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      overflow: hidden;
+    }
 
-* {margin:0; padding:0; box-sizing:border-box;}
+    .video-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-body {
-    background:var(--bg);
-    color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    transition:.3s;
-}
+    /* Overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(
+        rgba(0, 70, 90, 0.35),
+        rgba(0, 0, 0, 0.6)
+      );
+      z-index: -1;
+    }
 
-.container {
-    width:100%;
-    max-width:520px;
-    background:var(--card);
-    border:1px solid var(--border);
-    padding:45px 28px;
-    border-radius:14px;
-    backdrop-filter:blur(8px);
-    position:relative;
-}
+    /* Content */
+    .container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 1.5rem;
+    }
 
-.theme-btn {
-    position:absolute;
-    top:12px;
-    right:12px;
-    padding:6px 12px;
-    border-radius:8px;
-    background:var(--card);
-    border:1px solid var(--border);
-    cursor:pointer;
-}
+    h1 {
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      color: #FFD700;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      text-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    }
 
-.logo-3d {
-    width:120px;
-    height:120px;
-    margin:0 auto 28px;
-    border-radius:16px;
-    background:var(--card);
-    border:1px solid var(--border);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-    transform-style:preserve-3d;
-    transition:transform .15s;
-}
+    .countdown {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
-.logo-3d img {
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
+    .time-box {
+      background: rgba(0, 40, 60, 0.65);
+      border: 1px solid rgba(255, 215, 0, 0.6);
+      border-radius: 12px;
+      padding: 0.8rem 1rem;
+      min-width: 80px;
+      backdrop-filter: blur(6px);
+    }
 
-#logoInput {display:none;}
+    .time-box span {
+      display: block;
+    }
 
-.status {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin:0 auto 20px;
-    width:max-content;
-    padding:7px 16px;
-    background:rgba(59,130,246,0.15);
-    border:1px solid rgba(59,130,246,0.3);
-    color:#60a5fa;
-    border-radius:20px;
-    font-size:14px;
-}
-.status-dot {
-    width:8px;
-    height:8px;
-    background:#60a5fa;
-    border-radius:50%;
-    animation:pulse 2s infinite;
-}
-@keyframes pulse {0%,100%{opacity:1;} 50%{opacity:0.25;}}
+    .number {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #FFD700;
+    }
 
-h1 {
-    text-align:center;
-    font-size:32px;
-    margin-bottom:10px;
-}
+    .label {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      opacity: 0.9;
+    }
 
-.subtitle {
-    text-align:center;
-    opacity:0.7;
-    margin-bottom:25px;
-    line-height:1.4;
-}
+    .socials {
+      position: absolute;
+      bottom: 30px;
+      display: flex;
+      gap: 16px;
+    }
 
-.timer {
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
-    margin:25px 0;
-}
+    .socials a {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(0, 40, 60, 0.7);
+      border: 1px solid #FFD700;
+      color: #FFD700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: 0.3s ease;
+    }
 
-.timer-box {
-    background:var(--card);
-    border:1px solid var(--border);
-    padding:12px;
-    border-radius:10px;
-    text-align:center;
-}
+    .socials a:hover {
+      background: #FFD700;
+      color: #003040;
+      transform: translateY(-4px);
+    }
 
-.timer-num {
-    font-size:22px;
-    font-weight:600;
-}
+    @media (max-width: 480px) {
+      .time-box {
+        min-width: 68px;
+        padding: 0.6rem;
+      }
 
-.timer-box div:nth-child(2){
-    font-size:12px;
-    opacity:0.7;
-}
-
-@media(max-width:420px){
-    .timer { gap:6px; }
-    .timer-box { padding:10px; }
-    .timer-num { font-size:18px; }
-    h1 { font-size:26px; }
-}
-
-.form-group {
-    display:flex;
-    gap:10px;
-    margin-top:10px;
-}
-
-input {
-    flex:1;
-    padding:12px 16px;
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:var(--card);
-    color:var(--text);
-}
-
-button {
-    background:#fff;
-    color:#000;
-    border:none;
-    padding:12px 20px;
-    border-radius:10px;
-    cursor:pointer;
-}
-
-.msg {
-    display:none;
-    margin-top:15px;
-    padding:12px;
-    border-radius:10px;
-    font-size:14px;
-}
-
-.success {
-    background:rgba(34,197,94,0.12);
-    border:1px solid rgba(34,197,94,0.3);
-    color:#4ade80;
-}
-.error {
-    background:rgba(239,68,68,0.12);
-    border:1px solid rgba(239,68,68,0.3);
-    color:#f87171;
-}
-</style>
+      .number {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
+  <div class="video-bg">
+    <!-- ჩასვი შენი პირდაპირი MP4 ლინკი -->
+    <video autoplay muted loop playsinline>
+      <source src="https://www.example.com/your-video.mp4" type="video/mp4">
+      ვიდეოს მხარდაჭერა არ არის.
+    </video>
+  </div>
 
-<div class="theme-btn" id="themeBtn">☀️ / 🌙</div>
+  <div class="overlay"></div>
 
-<label class="logo-3d" id="logo3d">
-    <input type="file" id="logoInput" accept="image/*">
-    <img id="logoImg" src="https://scontent.ftbs5-2.fna.fbcdn.net/v/t39.30808-6/558945585_1362927199174583_3993541699945333384_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=l8aq7MfoTugQ7kNvwHeWMXg&_nc_oc=Adlz4i7BubyCtQEzbMb6Y3qNnSDzjIkKQC0A2FzwnNpN7WRY3hd4-BFuLEsH2OzpI04&_nc_zt=23&_nc_ht=scontent.ftbs5-2.fna&_nc_gid=ImHpeaq6Fwo4fyld38Mfbg&oh=00_AflsZg_Tcb-4zwOPYiC_LvNHN0_aw7rXuvrRUrMfSP76Iw&oe=69388F12">
-</label>
+  <div class="container">
+    <h1>ვებსაიტი ამუშავდება 7 იანვრიდან</h1>
 
-<div class="status">
-    <div class="status-dot"></div>
-    In Development
-</div>
+    <div class="countdown">
+      <div class="time-box">
+        <span class="number" id="days">00</span>
+        <span class="label">DAYS</span>
+      </div>
+      <div class="time-box">
+        <span class="number" id="hours">00</span>
+        <span class="label">HOURS</span>
+      </div>
+      <div class="time-box">
+        <span class="number" id="minutes">00</span>
+        <span class="label">MIN</span>
+      </div>
+      <div class="time-box">
+        <span class="number" id="seconds">00</span>
+        <span class="label">SEC</span>
+      </div>
+    </div>
+  </div>
 
-<h1>Coming Soon</h1>
-<p class="subtitle">საიტი მზადდება. ჩაწერე Email და დასრულებაზე შეგატყობინებ.</p>
+  <div class="socials">
+    <a href="https://www.facebook.com/lostlocklost" target="_blank">
+      <i class="fab fa-facebook-f"></i>
+    </a>
+    <a href="https://www.instagram.com/lost_lock1/" target="_blank">
+      <i class="fab fa-instagram"></i>
+    </a>
+  </div>
 
-<div class="timer">
-    <div class="timer-box"><div id="d" class="timer-num">00</div><div>Days</div></div>
-    <div class="timer-box"><div id="h" class="timer-num">00</div><div>Hours</div></div>
-    <div class="timer-box"><div id="m" class="timer-num">00</div><div>Min</div></div>
-    <div class="timer-box"><div id="s" class="timer-num">00</div><div>Sec</div></div>
-</div>
+  <script>
+    const days = document.getElementById("days");
+    const hours = document.getElementById("hours");
+    const minutes = document.getElementById("minutes");
+    const seconds = document.getElementById("seconds");
 
-<div class="form-group">
-    <input type="email" id="email" placeholder="შეიყვანე Email">
-    <button id="submitBtn">დამატე</button>
-</div>
-<div class="msg" id="msg"></div>
+    function updateCountdown() {
+      const now = new Date();
+      let target = new Date(now.getFullYear(), 0, 7);
+      if (now > target) target = new Date(now.getFullYear()+1, 0, 7);
 
-</div>
-
-<script>
-document.getElementById("themeBtn").onclick = () => {
-    const doc = document.documentElement;
-    doc.dataset.theme = doc.dataset.theme === "dark" ? "light" : "dark";
-};
-
-const logo = document.getElementById("logo3d");
-logo.addEventListener("mousemove", e => {
-    const r = logo.getBoundingClientRect();
-    const x = e.clientX - (r.left + r.width/2);
-    const y = e.clientY - (r.top + r.height/2);
-    logo.style.transform = `rotateX(${ -y/25 }deg) rotateY(${ x/25 }deg)`;
-});
-logo.addEventListener("mouseleave", () => {
-    logo.style.transform = "rotateX(0deg) rotateY(0deg)";
-});
-
-document.getElementById("logoInput").addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => document.getElementById("logoImg").src = reader.result;
-    reader.readAsDataURL(file);
-});
-
-const launch = new Date("2025-12-31T00:00:00").getTime();
-setInterval(() => {
-    const now = Date.now();
-    const diff = launch - now;
-
-    const d = Math.floor(diff/(1000*60*60*24));
-    const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
-    const m = Math.floor((diff%(1000*60*60))/(1000*60));
-    const s = Math.floor((diff%(1000*60))/1000);
-
-    document.getElementById("d").textContent = String(d).padStart(2,"0");
-    document.getElementById("h").textContent = String(h).padStart(2,"0");
-    document.getElementById("m").textContent = String(m).padStart(2,"0");
-    document.getElementById("s").textContent = String(s).padStart(2,"0");
-},1000);
-
-document.getElementById("submitBtn").onclick = () => {
-    const email = document.getElementById("email").value.trim();
-    const msg = document.getElementById("msg");
-
-    if (!email.includes("@")) {
-        msg.textContent = "ემაილი არასწორია.";
-        msg.className = "msg error";
-        msg.style.display = "block";
-        return;
+      const diff = target - now;
+      days.textContent = String(Math.floor(diff / (1000*60*60*24))).padStart(2, "0");
+      hours.textContent = String(Math.floor((diff/(1000*60*60)) % 24)).padStart(2, "0");
+      minutes.textContent = String(Math.floor((diff/(1000*60)) % 60)).padStart(2, "0");
+      seconds.textContent = String(Math.floor((diff/1000) % 60)).padStart(2, "0");
     }
 
-    const list = JSON.parse(localStorage.getItem("emails") || "[]");
-    list.push({email, ts:Date.now()});
-    localStorage.setItem("emails", JSON.stringify(list));
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  </script>
 
-    msg.textContent = "Email წარმატებით დაემატა!";
-    msg.className = "msg success";
-    msg.style.display = "block";
-    document.getElementById("email").value = "";
-};
-</script>
 </body>
 </html>
