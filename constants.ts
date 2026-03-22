@@ -6,7 +6,7 @@ export const ASSETS = {
   // paste the image URL here. If left empty, the SVG will be used.
   logo: 'https://i.ibb.co/p6mrsWqN/Screenshot-from-2026-02-16-23-29-47.png', // The logo provided by the user
   
-  mainBackground: 'https://i.postimg.cc/0Q52cgW9/848556f819fc5a759463ddbcbc6bdb75.jpg',
+  mainBackground: 'https://i.postimg.cc/RZ0ksS9G/7f8313524e33f3802bb2cdc99a66ed45.jpg',
   heroVideo: 'https://framerusercontent.com/assets/nM4DyIHwgOozU0nZZReJ4GVU.mp4',
   heroFallback: 'https://images.unsplash.com/photo-1519337265831-281ec6cc8514?q=80&w=2670&auto=format&fit=crop'
 };
