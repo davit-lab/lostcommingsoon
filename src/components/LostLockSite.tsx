@@ -294,7 +294,14 @@ const LostLockSite: React.FC = () => {
                 </a>
               </div>
               <div className="rounded-[32px] md:rounded-[48px] overflow-hidden border border-primary/20 shadow-2xl h-[400px] md:h-[500px]">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2978.2!2d44.78!3d41.72!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDHCsDQzJzEyLjAiTiA0NMKwNDYnNDguMCJF!5e0!3m2!1sen!2sge!4v1" width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" />
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d993.4!2d44.7309356!3d41.7092913!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40447342e62489f5%3A0xb1f017cf712d9384!2sLostlock!5e0!3m2!1ska!2sge!4v1"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                />
               </div>
             </div>
           </div>
