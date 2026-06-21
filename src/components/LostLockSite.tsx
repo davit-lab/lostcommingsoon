@@ -277,7 +277,7 @@ const LostLockSite: React.FC = () => {
                     <span className="font-black text-xl md:text-2xl text-foreground uppercase">Facebook</span>
                     <span className="font-bold text-muted-foreground">{t.ui.writeUs}</span>
                   </a>
-                  <a href="https://www.instagram.com/lost_lock1/" target="_blank" rel="noreferrer" className="p-8 md:p-10 rounded-[32px] md:rounded-[40px] bg-[#E4405F]/10 border border-[#E4405F]/30 flex flex-col gap-4">
+                  <a href="https://www.instagram.com/lostlock_official/" target="_blank" rel="noreferrer" className="p-8 md:p-10 rounded-[32px] md:rounded-[40px] bg-[#E4405F]/10 border border-[#E4405F]/30 flex flex-col gap-4">
                     <Instagram size={28} className="text-[#E4405F]" />
                     <span className="font-black text-xl md:text-2xl text-foreground uppercase">Instagram</span>
                     <span className="font-bold text-muted-foreground">{t.ui.followUs}</span>
@@ -433,7 +433,7 @@ const LostLockSite: React.FC = () => {
           <div className="pt-16 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="text-muted-foreground/40 text-[10px] font-black uppercase tracking-widest">{t.ui.copyright}</div>
             <div className="flex gap-10">
-              <a href="https://www.instagram.com/lost_lock1/" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground transition-all transform hover:scale-110"><Instagram size={28} /></a>
+              <a href="https://www.instagram.com/lostlock_official/" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground transition-all transform hover:scale-110"><Instagram size={28} /></a>
               <a href="https://www.facebook.com/lostlocklost" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground transition-all transform hover:scale-110"><Facebook size={28} /></a>
             </div>
           </div>
