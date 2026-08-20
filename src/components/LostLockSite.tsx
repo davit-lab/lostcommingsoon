@@ -10,7 +10,7 @@ import { ServiceItem, Language } from '@/types';
 const Logo = ({ className = "w-10 h-10" }: { className?: string }) => {
   const { assets } = useContentStore();
   if (assets.logo) {
-    return <img src={assets.logo} alt="Lost Lock Logo" className={`${className} object-contain`} />;
+    return <img src={assets.logo} alt="Lost Lock Logo" className={`${className} object-contain`} width={56} height={56} decoding="async" />;
   }
   return (
     <svg viewBox="0 0 100 125" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -98,7 +98,7 @@ const HeroComp = ({ onNavigate, lang }: { onNavigate: (hash: string) => void; la
   const t = translations[lang];
   return (
     <section className="relative w-full min-h-[500px] md:h-[600px] overflow-hidden mt-2 md:mt-4 rounded-[32px] md:rounded-[48px] mx-auto max-w-[1400px] shadow-2xl border border-zinc-800">
-      <video src={assets.heroVideo} autoPlay loop muted playsInline poster={assets.heroFallback} className="absolute inset-0 w-full h-full object-cover" />
+      <video src={assets.heroVideo} autoPlay loop muted playsInline poster={assets.heroFallback} preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/50 flex flex-col justify-end p-6 md:p-20">
         <div className="flex flex-col gap-4 md:gap-6 max-w-4xl">
           <h1 className="text-5xl md:text-[120px] font-vintage text-foreground tracking-normal leading-[0.9] md:leading-[0.85] uppercase drop-shadow-2xl">Lost Lock</h1>
@@ -123,7 +123,7 @@ const CardComp: React.FC<{ item: ServiceItem; onClick: () => void; lang: Languag
   return (
     <motion.div whileHover={{ y: -12 }} onClick={onClick} className="group flex flex-col gap-4 md:gap-8 cursor-pointer w-full relative">
       <div className="relative aspect-square overflow-hidden rounded-[24px] md:rounded-[32px] border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
-        <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" />
+        <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" loading="lazy" decoding="async" width={400} height={400} />
         <button onClick={handleShare} className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 text-primary hover:bg-primary hover:text-primary-foreground transition-all">
           <AnimatePresence mode="wait">
             {copied ? <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}><Check size={15} /></motion.div> : <Share2 size={15} />}
@@ -202,13 +202,13 @@ const LostLockSite: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 items-start">
             <div className="flex flex-col gap-4">
               <div className="relative aspect-square rounded-[24px] md:rounded-[40px] overflow-hidden border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
-                <img src={itemMatch.image} alt={itemMatch.name} className="w-full h-full object-cover" />
+                <img src={itemMatch.image} alt={itemMatch.name} className="w-full h-full object-cover" loading="lazy" decoding="async" width={600} height={600} />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 {[0, 1, 2].map((i) => (
                   <div key={i} className="relative aspect-square rounded-[16px] md:rounded-[24px] overflow-hidden border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
                     {itemMatch.images && itemMatch.images[i] ? (
-                      <img src={itemMatch.images[i]} alt={`${itemMatch.name} ${i + 2}`} className="w-full h-full object-cover" />
+                      <img src={itemMatch.images[i]} alt={`${itemMatch.name} ${i + 2}`} className="w-full h-full object-cover" loading="lazy" decoding="async" width={200} height={200} />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-zinc-700">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
@@ -218,8 +218,8 @@ const LostLockSite: React.FC = () => {
                 ))}
               </div>
               {itemMatch.video && (
-                <div className="relative aspect-video rounded-[24px] md:rounded-[40px] overflow-hidden border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
-                  <video src={itemMatch.video} controls playsInline className="w-full h-full object-cover" />
+                <div className="relative aspect-video rounded-[24px] md:rounded-[40px] border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
+                  <video src={itemMatch.video} controls playsInline preload="metadata" className="w-full h-full object-contain bg-black rounded-[24px] md:rounded-[40px]" />
                 </div>
               )}
             </div>

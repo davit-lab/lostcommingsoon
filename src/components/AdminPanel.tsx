@@ -124,7 +124,7 @@ const AdminDashboard: React.FC = () => {
               <InputField label="Background Image URL (optional, overlays the color)" value={assets.mainBackground} onChange={(v) => { updateAssets({ mainBackground: v }); showSaved(); }} />
               {assets.mainBackground && (
                 <div className="mt-2 rounded-2xl overflow-hidden border border-primary/20 max-w-md">
-                  <img src={assets.mainBackground} alt="Background preview" className="w-full h-48 object-cover" />
+                  <img src={assets.mainBackground} alt="Background preview" className="w-full h-48 object-cover" loading="lazy" decoding="async" width={400} height={192} />
                 </div>
               )}
             </div>
@@ -192,7 +192,7 @@ const AdminDashboard: React.FC = () => {
                 <h3 className="text-lg font-black text-foreground uppercase tracking-wide">Logo</h3>
                 {assets.logo && (
                   <div className="w-20 h-20 rounded-xl bg-background border border-primary/20 flex items-center justify-center overflow-hidden">
-                    <img src={assets.logo} alt="Logo preview" className="max-w-full max-h-full object-contain" />
+                    <img src={assets.logo} alt="Logo preview" className="max-w-full max-h-full object-contain" decoding="async" width={80} height={80} />
                   </div>
                 )}
               </div>
