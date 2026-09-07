@@ -1,0 +1,4 @@
+project_id = "zgvdmiabgbutfcsaqysc"
+
+[functions.reel-upload-sign]
+verify_jwt = false
