@@ -34,6 +34,7 @@ export type Database = {
           notes: string | null
           status: string
           live_items: Json
+          paid_amount: number
           created_at: string
           updated_at: string
         }
@@ -56,6 +57,7 @@ export type Database = {
           notes?: string | null
           status?: string
           live_items?: Json
+          paid_amount?: number
           created_at?: string
           updated_at?: string
         }
@@ -78,6 +80,7 @@ export type Database = {
           notes?: string | null
           status?: string
           live_items?: Json
+          paid_amount?: number
           created_at?: string
           updated_at?: string
         }
@@ -185,6 +188,10 @@ export type Database = {
       }
       ll_admin_set_live_items: {
         Args: { p_username: string; p_password: string; p_id: string; p_items: Json }
+        Returns: undefined
+      }
+      ll_admin_set_check: {
+        Args: { p_username: string; p_password: string; p_id: string; p_items: Json; p_paid_amount: number }
         Returns: undefined
       }
       ll_admin_get_setting: {

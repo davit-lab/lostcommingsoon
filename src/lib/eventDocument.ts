@@ -25,6 +25,15 @@ const stamp = (iso: string) => {
   return `${d.getDate()} ${KA_MONTHS[d.getMonth()]} ${d.getFullYear()}, ${timeOf(d)}`;
 };
 
+const paidAmountOf = (b: BookingRow): number => {
+  const direct = Number(b.paid_amount);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const metadata = Array.isArray(b.live_items)
+    ? b.live_items.find((item) => item.id === '__lostlock_paid_amount__')
+    : undefined;
+  return Math.max(Number(metadata?.price ?? 0), 0);
+};
+
 /**
  * Prints an A4 document by rendering it into a hidden iframe and calling print().
  * No popup windows and no inline <script> — immune to popup blockers & page CSP.
@@ -154,6 +163,8 @@ export function buildEventDocHtml(b: BookingRow): string {
   const menuItems: BookingMenuLine[] = Array.isArray(b.menu_items) ? b.menu_items : [];
   const services: BookingServiceLine[] = Array.isArray(b.services) ? b.services : [];
   const hasExtras = Number(b.extra_kids) > 0;
+  const paidAmount = paidAmountOf(b);
+  const remainingAmount = Math.max(Number(b.total_price) - paidAmount, 0);
 
   const itemRow = (name: string, cat: string, qty: number | null, unit: number, sum: number, i: number) => `
     <tr class="${i % 2 ? 'z' : ''}">
@@ -234,7 +245,9 @@ ${HEAD_LINKS}
     ${hasExtras ? `<div class="t-row"><span class="k">დამატებითი ბავშვები</span><span class="num">${fmt(b.extra_kids_cost)}</span></div>` : ''}
     ${Number(b.menu_total) > 0 ? `<div class="t-row"><span class="k">მენიუ</span><span class="num">${fmt(b.menu_total)}</span></div>` : ''}
     ${Number(b.services_total) > 0 ? `<div class="t-row"><span class="k">სერვისები</span><span class="num">${fmt(b.services_total)}</span></div>` : ''}
-    <div class="t-row grand"><span class="lbl">სულ გადასახდელი</span><span class="amt serif num">${fmt(b.total_price)}</span></div>
+    ${paidAmount > 0 ? `<div class="t-row"><span class="k">სრული ღირებულება</span><span class="num">${fmt(b.total_price)}</span></div>` : ''}
+    ${paidAmount > 0 ? `<div class="t-row" style="color:#23734a;font-weight:700"><span>ბე / უკვე გადახდილი</span><span class="num">− ${fmt(paidAmount)}</span></div>` : ''}
+    <div class="t-row grand"><span class="lbl">${paidAmount > 0 ? 'დარჩენილი თანხა' : 'სულ გადასახდელი'}</span><span class="amt serif num">${fmt(remainingAmount)}</span></div>
   </div>
 
   ${(b.notes ?? '').trim() ? `<div class="note"><b>შენიშვნა:</b> ${String(b.notes).replace(/</g, '&lt;')}</div>` : ''}
@@ -275,6 +288,9 @@ export function buildCheckDocHtml(b: BookingRow, liveItems: LiveItem[]): string 
     Number(b.total_price) ||
     Number(b.base_price) + Number(b.extra_kids_cost) + Number(b.menu_total) + Number(b.services_total);
   const liveTotal = liveItems.reduce((a, l) => a + Number(l.price) * Number(l.qty), 0);
+  const total = bookedTotal + liveTotal;
+  const paid = paidAmountOf(b);
+  const balance = Math.max(total - paid, 0);
 
   const bookedRows = [
     { n: 'ბაზისური პაკეტი', q: 1, p: Number(b.base_price) },
@@ -285,119 +301,153 @@ export function buildCheckDocHtml(b: BookingRow, liveItems: LiveItem[]): string 
 
   const liveRows = liveItems.filter((l) => Number(l.qty) > 0 && Number(l.price) >= 0 && (l.name || '').trim());
 
-  const leaderRow = (name: string, qty: number, sum: number, strong?: boolean) => `
-    <div class="li${strong ? ' strong' : ''}">
-      <span class="n">${qty > 1 ? `<span class="q num">${qty} × </span>` : ''}${String(name).replace(/</g, '&lt;')}</span>
-      <span class="dots"></span>
-      <span class="s num">${fmt(sum)}</span>
-    </div>`;
+  const safe = (value: unknown) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const itemRow = (name: string, qty: number, unit: number) => `
+    <tr>
+      <td>${safe(name)}</td>
+      <td class="num center">${qty}</td>
+      <td class="num right">${fmt(unit)}</td>
+      <td class="num right strong">${fmt(unit * qty)}</td>
+    </tr>`;
 
   return `<!DOCTYPE html>
 <html lang="ka">
 <head>
-${HEAD_LINKS}
-<title>Lost Lock Check — ${b.ref_code}</title>
+<meta charset="UTF-8" />
+<title>Lost Lock — ${safe(b.ref_code)}</title>
 <style>
-  ${SHARED_CSS}
-  body { max-width: 172mm; margin: 0 auto; }
-
-  .ch-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; }
-  .ch-brand { display: flex; align-items: center; gap: 14px; }
-  .ch-brand img { height: 46px; object-fit: contain; }
-  .ch-name { font-size: 24px; line-height: 1; letter-spacing: .05em; }
-  .ch-sub { margin-top: 4px; }
-  .ch-ref { text-align: right; }
-  .ch-ref .lbl { font-size: 8px; letter-spacing: .2em; font-weight: 700; color: ${FAINT}; }
-  .ch-ref .v { font-size: 20px; color: ${GOLD}; margin-top: 2px; }
-
-  .rule { height: 3px; background: ${BAND}; margin-bottom: 2px; }
-  .rule-thin { height: 1px; background: ${GOLD}; margin-bottom: 16px; }
-
-  .ch-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 14px 0 16px; }
-  .m-field { display: flex; flex-direction: column; gap: 2px; border: 1px solid #EAE6DA; border-radius: 8px; padding: 9px 11px; background: #FCFBF7; }
-  .m-field .caps { display: block; }
-  .m-field .mv { font-size: 11.5px; font-weight: 700; }
-
-  .sec-lbl { text-align: center; margin: 18px 0 6px; display: flex; align-items: center; gap: 12px; }
-  .sec-lbl span { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: ${GOLD}; }
-  .sec-lbl::before, .sec-lbl::after { content: ''; flex: 1; border-top: 1px solid ${HAIR}; }
-
-  .lines { padding: 0 2px; }
-  .li { display: flex; align-items: baseline; padding: 3.5px 0; }
-  .li .n { font-weight: 500; }
-  .li .q { color: ${FAINT}; font-size: 10px; }
-  .dots { flex: 1; border-bottom: 1.5px dotted #C9C2AF; margin: 0 8px; transform: translateY(-3px); }
-  .li .s { font-weight: 600; }
-  .li.strong .s { font-weight: 700; }
-  .empty { text-align: center; color: ${FAINT}; padding: 6px 0; }
-
-  .sums { width: 260px; margin-left: auto; margin-top: 16px; }
-  .sums .row { display: flex; justify-content: space-between; padding: 4px 0; color: #4d4942; }
-  .total-line { display: flex; justify-content: space-between; align-items: baseline; border-top: 2px solid ${BAND}; margin-top: 7px; padding-top: 9px; }
-  .total-line .lbl { font-size: 11px; font-weight: 700; letter-spacing: .06em; }
-  .total-line .amt { font-size: 24px; line-height: 1; color: ${GOLD}; }
-
-  .thanks { text-align: center; margin-top: 24px; font-style: italic; color: #55503f; font-size: 11px; }
-
-  .signs { display: flex; justify-content: space-between; margin-top: 38px; max-width: 80%; margin-left: auto; margin-right: auto; }
-  .sig { text-align: center; width: 190px; }
-  .sig .line { border-bottom: 1px solid #A9A294; height: 28px; }
-  .sig .who { margin-top: 6px; }
-
-  .foot { margin-top: 26px; border-top: 1px solid ${HAIR}; padding-top: 8px; display: flex; justify-content: space-between; }
+  @page { size: A4; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; color: #181714; }
+  body {
+    font-family: Arial, 'Noto Sans Georgian', sans-serif;
+    font-size: 11px;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-feature-settings: 'tnum' 1;
+  }
+  .sheet { max-width: 178mm; min-height: 270mm; margin: 0 auto; border: 1px solid #e6e0d5; }
+  .topline { height: 6px; background: #b88a2b; }
+  .content { padding: 17mm 16mm 11mm; }
+  .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+  .brand { font-family: Georgia, serif; font-size: 29px; font-weight: 700; letter-spacing: .08em; line-height: 1; }
+  .brand-note { margin-top: 7px; color: #777064; font-size: 9px; font-weight: 700; letter-spacing: .17em; text-transform: uppercase; }
+  .document { text-align: right; }
+  .eyebrow { color: #9a7a26; font-size: 8px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+  .reference { margin-top: 4px; font-family: Georgia, serif; font-size: 20px; font-weight: 700; }
+  .issued { margin-top: 3px; color: #777064; font-size: 9px; }
+  .divider { margin: 18px 0; height: 1px; background: #ded8cd; }
+  .intro { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 10px; }
+  .meta { min-height: 58px; padding: 11px 12px; background: #f8f6f1; border: 1px solid #ebe6dc; }
+  .meta .label { display: block; margin-bottom: 5px; color: #8a837a; font-size: 8px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+  .meta .value { font-size: 12px; font-weight: 700; }
+  .meta .sub { display: block; margin-top: 2px; color: #777064; font-size: 9px; font-weight: 400; }
+  .section-title { margin: 23px 0 8px; font-size: 9px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 8px 9px; background: #191714; color: #fff; font-size: 8px; letter-spacing: .12em; text-align: left; text-transform: uppercase; }
+  td { padding: 8px 9px; border-bottom: 1px solid #ece8df; }
+  tbody tr:nth-child(even) td { background: #fbfaf7; }
+  .right { text-align: right; }
+  .center { text-align: center; }
+  .num { font-variant-numeric: tabular-nums; }
+  .strong { font-weight: 700; }
+  .empty { padding: 13px 9px; border-bottom: 1px solid #ece8df; color: #8a837a; text-align: center; }
+  .payment { display: grid; grid-template-columns: 1fr 76mm; gap: 18px; align-items: stretch; margin-top: 20px; }
+  .message { padding: 16px; background: #f8f6f1; border-left: 3px solid #b88a2b; color: #5f594f; }
+  .message b { display: block; margin-bottom: 5px; color: #181714; font-family: Georgia, serif; font-size: 15px; }
+  .summary { border: 1px solid #ded8cd; }
+  .sum-row { display: flex; justify-content: space-between; gap: 16px; padding: 7px 11px; border-bottom: 1px solid #ece8df; }
+  .sum-row span:first-child { color: #6f695f; }
+  .sum-row.paid { color: #23734a; font-weight: 700; }
+  .sum-row.paid span:first-child { color: #23734a; }
+  .balance { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 13px 11px; background: #191714; color: #fff; }
+  .balance .label { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .balance .amount { font-family: Georgia, serif; font-size: 22px; font-weight: 700; white-space: nowrap; }
+  .paid-stamp { color: #55b781; font-size: 13px; letter-spacing: .04em; }
+  .footer { display: flex; justify-content: space-between; gap: 20px; margin-top: 35px; padding-top: 10px; border-top: 1px solid #ded8cd; color: #777064; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+  .signature { margin-top: 34px; width: 62mm; margin-left: auto; text-align: center; color: #777064; font-size: 8px; letter-spacing: .12em; text-transform: uppercase; }
+  .signature::before { content: ''; display: block; margin-bottom: 7px; border-top: 1px solid #8a837a; }
 </style>
 </head>
 <body>
-  <header class="ch-head">
-    <div class="ch-brand">
-      ${ASSETS.logo ? `<img src="${ASSETS.logo}" alt="" />` : ''}
-      <div>
-        <div class="ch-name serif"><b>LOST LOCK</b></div>
-        <div class="caps ch-sub">ღონისძიების ანგარიში · ბარი</div>
-      </div>
+  <main class="sheet">
+    <div class="topline"></div>
+    <div class="content">
+      <header class="header">
+        <div>
+          <div class="brand">LOST LOCK</div>
+          <div class="brand-note">ღონისძიებების სივრცე · თბილისი</div>
+        </div>
+        <div class="document">
+          <div class="eyebrow">ანგარიშსწორების ქვითარი</div>
+          <div class="reference num">№ ${safe(b.ref_code)}</div>
+          <div class="issued">გაცემულია ${now.getDate()} ${KA_MONTHS[now.getMonth()]} ${now.getFullYear()}, ${timeOf(now)}</div>
+        </div>
+      </header>
+
+      <div class="divider"></div>
+
+      <section class="intro">
+        <div class="meta">
+          <span class="label">კლიენტი</span>
+          <span class="value">${safe(b.parent_name)}</span>
+          <span class="sub num">${safe(b.phone)}</span>
+        </div>
+        <div class="meta">
+          <span class="label">ღონისძიება</span>
+          <span class="value">${formatDate(b.event_date)}</span>
+          <span class="sub num">${safe(b.session_hour ?? '—')} · 2 საათი</span>
+        </div>
+        <div class="meta">
+          <span class="label">სტუმრები</span>
+          <span class="value num">${b.kids_count} ბავშვი</span>
+          <span class="sub">დაჯავშნილი რაოდენობა</span>
+        </div>
+      </section>
+
+      <div class="section-title">დაჯავშნილი პაკეტი და სერვისები</div>
+      <table>
+        <thead><tr><th>დასახელება</th><th class="center">რაოდ.</th><th class="right">ერთ.</th><th class="right">ჯამი</th></tr></thead>
+        <tbody>${bookedRows.map((r) => itemRow(r.n, r.q, r.p)).join('')}</tbody>
+      </table>
+
+      ${liveRows.length ? `
+        <div class="section-title">ღონისძიების დროს დამატებული</div>
+        <table>
+          <thead><tr><th>დასახელება</th><th class="center">რაოდ.</th><th class="right">ერთ.</th><th class="right">ჯამი</th></tr></thead>
+          <tbody>${liveRows.map((l) => itemRow(l.name, Number(l.qty), Number(l.price))).join('')}</tbody>
+        </table>` : ''}
+
+      <section class="payment">
+        <div class="message">
+          <b>გმადლობთ, რომ აგვირჩიეთ.</b>
+          სასიამოვნო მოგონებებს და ბევრ თავგადასავალს გისურვებთ Lost Lock-ში.
+        </div>
+        <div class="summary">
+          <div class="sum-row"><span>ჯავშანი</span><strong class="num">${fmt(bookedTotal)}</strong></div>
+          <div class="sum-row"><span>დამატებული</span><strong class="num">${fmt(liveTotal)}</strong></div>
+          <div class="sum-row"><span>სრული თანხა</span><strong class="num">${fmt(total)}</strong></div>
+          <div class="sum-row paid"><span>ბე / უკვე გადახდილი</span><strong class="num">− ${fmt(paid)}</strong></div>
+          <div class="balance">
+            <span class="label">${balance === 0 ? 'სტატუსი' : 'დარჩენილი თანხა'}</span>
+            <span class="amount num ${balance === 0 ? 'paid-stamp' : ''}">${balance === 0 ? 'სრულად გადახდილია' : fmt(balance)}</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="signature">პასუხისმგებელი პირი</div>
+      <footer class="footer">
+        <span>Lost Lock · თბილისი · 568 96 72 77</span>
+        <span class="num">${safe(b.ref_code)} · ${formatDate(b.event_date)}</span>
+      </footer>
     </div>
-    <div class="ch-ref">
-      <div class="lbl">ანგარიში №</div>
-      <div class="v serif num">${b.ref_code}</div>
-    </div>
-  </header>
-  <div class="rule"></div>
-  <div class="rule-thin"></div>
-
-  <div class="ch-meta">
-    <div class="m-field"><span class="caps">ორშაბათი — კვირა</span><span class="mv">${formatDate(b.event_date)}</span></div>
-    <div class="m-field"><span class="caps">სესია</span><span class="mv num">${b.session_hour ?? '—'}</span></div>
-    <div class="m-field"><span class="caps">სტუმარი</span><span class="mv">${b.parent_name}</span></div>
-    <div class="m-field"><span class="caps">სტუმრები</span><span class="mv num">${b.kids_count} ბავშვი</span></div>
-  </div>
-
-  <div class="sec-lbl"><span>ჯავშანი</span></div>
-  <div class="lines">
-    ${bookedRows.map((r) => leaderRow(r.n, r.q, r.p * r.q)).join('')}
-  </div>
-
-  <div class="sec-lbl"><span>ბარი · ღონისძიების დროს</span></div>
-  <div class="lines">
-    ${liveRows.length ? liveRows.map((l) => leaderRow(l.name, Number(l.qty), Number(l.price) * Number(l.qty))).join('') : '<div class="empty">— დამატება არ არის —</div>'}
-  </div>
-
-  <div class="sums">
-    <div class="row"><span class="k" style="color:#4d4942">ჯავშანი</span><span class="num">${fmt(bookedTotal)}</span></div>
-    <div class="row"><span class="k" style="color:#4d4942">ბარი</span><span class="num">${fmt(liveTotal)}</span></div>
-    <div class="total-line"><span class="lbl">სულ</span><span class="amt serif num">${fmt(bookedTotal + liveTotal)}</span></div>
-  </div>
-
-  <div class="thanks">გმადლობთ, რომ Lost Lock-თან ერთად აღნიშნეთ!</div>
-
-  <div class="signs">
-    <div class="sig"><div class="line"></div><div class="who caps">მშობელი</div></div>
-    <div class="sig"><div class="line"></div><div class="who caps">ჰოსტი</div></div>
-  </div>
-
-  <footer class="foot">
-    <span class="caps">Lost Lock · თბილისი · 568 96 72 77</span>
-    <span class="caps num">${now.getDate()} ${KA_MONTHS[now.getMonth()]} ${now.getFullYear()} ${timeOf(now)}</span>
-  </footer>
+  </main>
 </body>
 </html>`;
 }

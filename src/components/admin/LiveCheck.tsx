@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Minus, X, Save, Printer, Search, RotateCcw, Check, Loader2, ShoppingCart, Receipt, UserPlus } from 'lucide-react';
+import { Plus, Minus, X, Save, Printer, Search, RotateCcw, Check, Loader2, ShoppingCart, Receipt, UserPlus, WalletCards } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { useContentStore } from '@/store/contentStore';
@@ -16,19 +16,28 @@ const parsePrice = (p: unknown): number => Math.round(Number(String(p ?? '').rep
 interface CatalogEntry { key: string; name: string; price: number; cat: string; catKey: string; }
 
 const EXTRA_KID: CatalogEntry = { key: '__kid__', name: 'დამატებითი ბავშვი', price: 30, cat: 'ბავშვები', catKey: 'kids' };
+const PAID_META_ID = '__lostlock_paid_amount__';
 
 interface Props {
   booking: BookingRow;
-  onSaved?: (items: LiveItem[]) => void;
+  onSaved?: (items: LiveItem[], paidAmount: number) => void;
 }
 
 const LiveCheck: React.FC<Props> = ({ booking, onSaved }) => {
   const { translations } = useContentStore();
-  const [items, setItems] = useState<LiveItem[]>(Array.isArray(booking.live_items) ? booking.live_items : []);
+  const storedItems = Array.isArray(booking.live_items) ? booking.live_items : [];
+  const storedPaidAmount = Number(
+    booking.paid_amount
+      ?? storedItems.find((item) => item.id === PAID_META_ID)?.price
+      ?? 0,
+  );
+  const originalItems = storedItems.filter((item) => item.id !== PAID_META_ID);
+  const [items, setItems] = useState<LiveItem[]>(originalItems);
   const [query, setQuery] = useState('');
   const [catFilter, setCatFilter] = useState<string>('all');
   const [customName, setCustomName] = useState('');
   const [customPrice, setCustomPrice] = useState('');
+  const [paidInput, setPaidInput] = useState(String(storedPaidAmount || ''));
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [saveErr, setSaveErr] = useState('');
@@ -68,8 +77,11 @@ const LiveCheck: React.FC<Props> = ({ booking, onSaved }) => {
     Number(booking.base_price) + Number(booking.extra_kids_cost) + Number(booking.menu_total) + Number(booking.services_total);
   const liveTotal = items.reduce((a, l) => a + Number(l.price) * Number(l.qty), 0);
   const grand = bookedTotal + liveTotal;
+  const paidAmount = parsePrice(paidInput);
+  const balance = Math.max(grand - paidAmount, 0);
   const liveCount = items.reduce((a, l) => a + Number(l.qty), 0);
-  const dirty = JSON.stringify(items) !== JSON.stringify(Array.isArray(booking.live_items) ? booking.live_items : []);
+  const dirty = JSON.stringify(items) !== JSON.stringify(originalItems)
+    || paidAmount !== storedPaidAmount;
 
   const addLine = (entry: Pick<CatalogEntry, 'key' | 'name' | 'price'>) => {
     setItems((prev) => {
@@ -102,9 +114,28 @@ const LiveCheck: React.FC<Props> = ({ booking, onSaved }) => {
   const save = async () => {
     setSaving(true);
     setSaveErr('');
-    const { error } = await supabase.rpc('ll_admin_set_live_items', {
-      p_username: ADMIN_USER, p_password: ADMIN_PASS, p_id: booking.id, p_items: items as unknown as Json,
+    let { error } = await supabase.rpc('ll_admin_set_check', {
+      p_username: ADMIN_USER,
+      p_password: ADMIN_PASS,
+      p_id: booking.id,
+      p_items: items as unknown as Json,
+      p_paid_amount: paidAmount,
     });
+    // Keep the feature working before the new database migration is deployed.
+    // The next save after migration automatically removes this metadata line.
+    if (error && (error.code === '42883' || error.code === 'PGRST202')) {
+      const fallbackItems: LiveItem[] = [
+        ...items,
+        { id: PAID_META_ID, name: 'უკვე გადახდილი', price: paidAmount, qty: 1 },
+      ];
+      const fallback = await supabase.rpc('ll_admin_set_live_items', {
+        p_username: ADMIN_USER,
+        p_password: ADMIN_PASS,
+        p_id: booking.id,
+        p_items: fallbackItems as unknown as Json,
+      });
+      error = fallback.error;
+    }
     setSaving(false);
     if (error) {
       console.error('[live-check] save failed', error);
@@ -113,21 +144,21 @@ const LiveCheck: React.FC<Props> = ({ booking, onSaved }) => {
     }
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1600);
-    onSaved?.(items);
+    onSaved?.(items, paidAmount);
   };
 
   return (
     <div className="rounded-2xl border border-zinc-800/70 overflow-hidden bg-zinc-900/30">
       {/* header */}
       <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-zinc-800/70 flex-wrap">
-        <span className={`flex items-center gap-2 text-xs font-bold ${dirty ? 'text-amber-400' : 'text-muted-foreground'}`}>
+        <span className={`flex items-center gap-2 text-xs font-semibold ${dirty ? 'text-amber-400' : 'text-muted-foreground'}`}>
           <span className={`w-2 h-2 rounded-full ${dirty ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`} />
           ბარი / დამატებით · {liveCount} პოზიც.
         </span>
         <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums font-semibold">
           <span className="px-2.5 py-1 rounded-lg bg-muted/40">ჯავშანი <b className="text-foreground">{fmt(bookedTotal)}</b></span>
           <span className="px-2.5 py-1 rounded-lg bg-muted/40">ბარი <b className="text-foreground text-primary">{fmt(liveTotal)}</b></span>
-          <span className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-sm font-black text-primary">{fmt(grand)}</span>
+          <span className="px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-sm font-black text-primary">სულ {fmt(grand)}</span>
         </div>
       </div>
 
@@ -202,7 +233,7 @@ const LiveCheck: React.FC<Props> = ({ booking, onSaved }) => {
             {items.length === 0 && (
               <div className="py-10 text-center text-[13px] text-zinc-600 inline-flex flex-col items-center gap-2">
                 <ShoppingCart size={20} className="text-zinc-700" />
-                აირჩიეთ პოზიციები მარჯვნიდან
+                აირჩიეთ პოზიციები კატალოგიდან
               </div>
             )}
             {items.map((l) => (
@@ -227,6 +258,28 @@ const LiveCheck: React.FC<Props> = ({ booking, onSaved }) => {
               <span className="font-black uppercase text-xs tracking-widest">სულ</span>
               <span className="text-xl font-black text-primary tabular-nums">{fmt(grand)}</span>
             </div>
+            <label className="flex items-center justify-between gap-4 pt-3 mt-2 border-t border-zinc-800/70">
+              <span className="inline-flex items-center gap-2 font-semibold text-emerald-400">
+                <WalletCards size={15} /> ბე / უკვე გადახდილი
+              </span>
+              <span className="relative w-28">
+                <input
+                  value={paidInput}
+                  onChange={(e) => setPaidInput(e.target.value.replace(/[^\d.]/g, ''))}
+                  inputMode="decimal"
+                  aria-label="ბე ან უკვე გადახდილი თანხა"
+                  placeholder="0"
+                  className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/5 py-2 pl-3 pr-7 text-right font-bold text-emerald-300 outline-none focus:border-emerald-400"
+                />
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-400">₾</span>
+              </span>
+            </label>
+            <div className="flex justify-between items-baseline pt-2">
+              <span className="font-bold">დარჩენილი თანხა</span>
+              <span className={`text-lg font-black tabular-nums ${balance === 0 ? 'text-emerald-400' : 'text-foreground'}`}>
+                {balance === 0 ? 'სრულად გადახდილია' : fmt(balance)}
+              </span>
+            </div>
           </div>
 
           <div className="flex gap-2 p-3 pt-1">
@@ -234,7 +287,7 @@ const LiveCheck: React.FC<Props> = ({ booking, onSaved }) => {
               className={`flex-1 px-3 py-2.5 rounded-xl text-[13px] font-black transition-colors ${savedFlash ? 'bg-emerald-600 text-white' : 'bg-primary text-primary-foreground hover:opacity-90'} disabled:opacity-40 inline-flex items-center justify-center gap-1.5`}>
               {saving ? <Loader2 size={14} className="animate-spin" /> : savedFlash ? <Check size={14} /> : <Save size={14} />}{savedFlash ? 'შენახულია' : 'შენახვა'}
             </button>
-            <button onClick={() => printCheckDoc({ ...booking, live_items: items }, items)}
+            <button onClick={() => printCheckDoc({ ...booking, live_items: items, paid_amount: paidAmount }, items)}
               className="px-4 py-2.5 rounded-xl border border-zinc-700 text-[13px] font-bold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors inline-flex items-center gap-1.5">
               <Printer size={14} /> ჩეკი
             </button>

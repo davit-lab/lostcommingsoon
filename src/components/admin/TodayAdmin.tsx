@@ -190,7 +190,7 @@ const TodayAdmin: React.FC = () => {
 
                     {checkOpen && (
                       <div className="px-4 pb-4">
-                        <LiveCheck booking={b} onSaved={(items) => setRows((rs) => rs.map((r) => (r.id === b.id ? { ...r, live_items: items } : r)))} />
+                        <LiveCheck booking={b} onSaved={(items, paidAmount) => setRows((rs) => rs.map((r) => (r.id === b.id ? { ...r, live_items: items, paid_amount: paidAmount } : r)))} />
                       </div>
                     )}
                   </div>

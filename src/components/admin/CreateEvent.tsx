@@ -5,6 +5,7 @@ import {
   Check, Minus, Plus, PartyPopper, Printer, AlertTriangle, Loader2, RefreshCw, X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useContentStore } from '@/store/contentStore';
 import { BookingRow, BookingMenuLine, BookingServiceLine } from '@/types';
 import { printEventDoc } from '@/lib/eventDocument';
@@ -14,6 +15,7 @@ const ADMIN_PASS = 'lostlock2013';
 
 const INCLUDED_KIDS = 20;
 const EXTRA_KID_PRICE = 30;
+const PAID_META_ID = '__lostlock_paid_amount__';
 const SESSIONS = [
   { hour: '11:00', price: 800 },
   { hour: '13:30', price: 800 },
@@ -46,13 +48,13 @@ const QtyBtn: React.FC<{ d: number; onClick: () => void; disabled?: boolean }> =
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <label className="flex flex-col gap-1.5">
-    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</span>
+    <span className="text-xs font-semibold text-zinc-400">{label}</span>
     {children}
   </label>
 );
 
-const inputCls = "w-full p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 focus:border-primary outline-none font-bold placeholder:text-muted-foreground/50 transition-colors text-sm";
-const cardCls = "rounded-[20px] md:rounded-[28px] bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/60 shadow-xl p-5 md:p-8";
+const inputCls = "w-full p-3 rounded-lg bg-[#151513] border border-white/10 focus:border-primary outline-none font-medium placeholder:text-zinc-600 transition-colors text-sm";
+const cardCls = "rounded-xl bg-[#11110f] border border-white/10 shadow-sm p-5 md:p-7";
 
 interface MenuLine { key: string; catKey: string; cat: string; name: string; price: number; qty: number }
 interface ServiceLine { key: string; name: string; price: number }
@@ -70,6 +72,7 @@ const CreateEvent: React.FC = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [deposit, setDeposit] = useState('');
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<BookingRow | null>(null);
@@ -112,6 +115,8 @@ const CreateEvent: React.FC = () => {
   );
   const servicesTotal = serviceLines.reduce((a, l) => a + l.price, 0);
   const totalPrice = sessionBase + extraKidsCost + menuTotal + servicesTotal;
+  const depositAmount = Math.min(parsePrice(deposit), totalPrice);
+  const remainingTotal = Math.max(totalPrice - depositAmount, 0);
 
   const slotKey = date && hour ? `${date}|${hour}` : '';
   const slotTaken = !!slotKey && slots.has(slotKey);
@@ -143,6 +148,7 @@ const CreateEvent: React.FC = () => {
         parent_name: name.trim(),
         phone: phone.trim(),
         notes: notes.trim(),
+        paid_amount: depositAmount,
       };
       const { data, error } = await supabase.rpc('ll_admin_create_booking', {
         p_username: ADMIN_USER,
@@ -152,7 +158,28 @@ const CreateEvent: React.FC = () => {
       if (error) throw error;
       const row = (data ?? [])[0] as unknown as BookingRow | undefined;
       if (!row) throw new Error('no row returned');
-      setCreated(row);
+      let paymentError: { code?: string; message?: string } | null = null;
+      if (depositAmount > 0) {
+        const saved = await supabase.rpc('ll_admin_set_check', {
+          p_username: ADMIN_USER,
+          p_password: ADMIN_PASS,
+          p_id: row.id,
+          p_items: [] as Json,
+          p_paid_amount: depositAmount,
+        });
+        paymentError = saved.error;
+        if (paymentError && (paymentError.code === '42883' || paymentError.code === 'PGRST202')) {
+          const fallback = await supabase.rpc('ll_admin_set_live_items', {
+            p_username: ADMIN_USER,
+            p_password: ADMIN_PASS,
+            p_id: row.id,
+            p_items: [{ id: PAID_META_ID, name: 'ბე / წინასწარ გადახდილი', price: depositAmount, qty: 1 }] as Json,
+          });
+          paymentError = fallback.error;
+        }
+      }
+      if (paymentError) console.error('[create-event] deposit save failed', paymentError);
+      setCreated({ ...row, paid_amount: depositAmount });
       loadSlots();
     } catch (e) {
       const err = e as { message?: string; code?: string; details?: string; hint?: string };
@@ -169,20 +196,20 @@ const CreateEvent: React.FC = () => {
 
   const reset = () => {
     setDate(''); setHour(null); setKids(INCLUDED_KIDS); setMenuQty({}); setServiceSel({});
-    setName(''); setPhone(''); setNotes(''); setError(''); setCreated(null);
+    setName(''); setPhone(''); setNotes(''); setDeposit(''); setError(''); setCreated(null);
   };
 
   if (created) {
     return (
       <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
         className="max-w-3xl mx-auto w-full">
-        <div className="rounded-[28px] md:rounded-[40px] bg-zinc-900/70 backdrop-blur-sm border border-emerald-500/30 shadow-2xl p-8 md:p-14 flex flex-col items-center text-center gap-6">
+        <div className="rounded-xl bg-[#11110f] border border-emerald-500/30 shadow-xl p-8 md:p-12 flex flex-col items-center text-center gap-6">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.12 }}
             className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
             <PartyPopper size={42} />
           </motion.div>
-          <h2 className="text-3xl md:text-5xl font-vintage uppercase text-foreground">ღონისძიება შეიქმნა</h2>
-          <div className="px-6 py-3 rounded-full border border-primary/40 bg-primary/10 text-primary font-black tracking-[0.25em] text-sm">
+          <h2 className="text-3xl md:text-4xl font-vintage text-foreground">ღონისძიება შეიქმნა</h2>
+          <div className="px-5 py-2 border border-primary/30 bg-primary/10 text-primary font-bold tracking-wider text-sm">
             № {created.ref_code}
           </div>
           <p className="text-muted-foreground font-bold text-base md:text-lg max-w-xl leading-relaxed">
@@ -190,11 +217,11 @@ const CreateEvent: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <button onClick={() => printEventDoc(created)}
-              className="flex-1 px-8 py-4 rounded-2xl bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-3">
+              className="flex-1 px-7 py-3.5 rounded-md bg-primary text-primary-foreground font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2">
               <Printer size={16} /> PDF დანიშნულება
             </button>
             <button onClick={reset}
-              className="flex-1 px-8 py-4 rounded-2xl border border-primary/30 text-primary font-black uppercase text-xs tracking-widest hover:bg-primary/10 transition-all flex items-center justify-center gap-3">
+              className="flex-1 px-7 py-3.5 rounded-md border border-primary/30 text-primary font-bold text-sm hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
               <Plus size={16} /> ახალი ღონისძიება
             </button>
           </div>
@@ -210,7 +237,7 @@ const CreateEvent: React.FC = () => {
         {/* EVENT DETAILS */}
         <div className={cardCls}>
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg md:text-2xl font-black uppercase flex items-center gap-3"><CalendarDays className="text-primary" size={22} /> დეტალები</h3>
+            <h3 className="text-lg font-semibold flex items-center gap-3"><CalendarDays className="text-primary" size={20} /> ღონისძიების დეტალები</h3>
             {slotsLoading && <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><RefreshCw size={12} className="animate-spin" /> იტვირთება…</span>}
           </div>
 
@@ -223,7 +250,7 @@ const CreateEvent: React.FC = () => {
               <div className="flex gap-2">
                 {SESSIONS.map((s) => (
                   <button key={s.hour} type="button" onClick={() => setHour(s.hour)}
-                    className={`flex-1 py-3 rounded-2xl border text-sm font-black transition-all ${hour === s.hour ? 'bg-primary text-primary-foreground border-primary' : 'bg-zinc-900/80 border-zinc-800 hover:border-primary/50'}`}>
+                    className={`flex-1 py-3 rounded-md border text-sm font-semibold transition-all ${hour === s.hour ? 'bg-primary text-primary-foreground border-primary' : 'bg-[#151513] border-white/10 hover:border-primary/50'}`}>
                     {s.hour}
                     <span className={`block text-[10px] font-bold ${hour === s.hour ? 'opacity-80' : 'text-primary'}`}>{fmt(s.price)}</span>
                   </button>
@@ -233,7 +260,7 @@ const CreateEvent: React.FC = () => {
           </div>
 
           {slotTaken && !slotsLoading && (
-            <div className="mt-4 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-400 text-[13px] font-bold flex items-start gap-2">
+            <div className="mt-4 p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/40 text-amber-400 text-[13px] font-medium flex items-start gap-2">
               <AlertTriangle size={16} className="shrink-0 mt-0.5" />
               ეს სესია უკვე დაკავებულია სხვა ჯავშნით. მაინც შეგიძლიათ დაჯავშნა — ამ შემთხვევაში იქნება ერთდროული ღონისძიებები.
             </div>
@@ -242,7 +269,7 @@ const CreateEvent: React.FC = () => {
 
         {/* CLIENT */}
         <div className={cardCls}>
-          <h3 className="text-lg md:text-2xl font-black uppercase flex items-center gap-3 mb-6"><User className="text-primary" size={22} /> კლიენტი</h3>
+          <h3 className="text-lg font-semibold flex items-center gap-3 mb-6"><User className="text-primary" size={20} /> კლიენტის ინფორმაცია</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="მშობლის სახელი *">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="მაგ: ნინო"
@@ -254,6 +281,21 @@ const CreateEvent: React.FC = () => {
             </Field>
           </div>
           <div className="mt-5">
+            <Field label="ბე / წინასწარ გადახდილი თანხა">
+              <div className="relative max-w-xs">
+                <input
+                  value={deposit}
+                  onChange={(e) => setDeposit(e.target.value.replace(/[^\d.]/g, ''))}
+                  placeholder="მაგ: 200"
+                  inputMode="decimal"
+                  className={`${inputCls} pr-10 text-emerald-300`}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400 font-bold">₾</span>
+              </div>
+            </Field>
+            <p className="mt-2 text-xs text-zinc-500">ეს თანხა ჩეკში გამოაკლდება სრულ ღირებულებას.</p>
+          </div>
+          <div className="mt-5">
             <Field label="შენიშვნა">
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="ტორტი, სპეციალური მოთხოვნები…"
                 className={`${inputCls} resize-y`} />
@@ -263,7 +305,7 @@ const CreateEvent: React.FC = () => {
 
         {/* KIDS */}
         <div className={cardCls}>
-          <h3 className="text-lg md:text-2xl font-black uppercase flex items-center gap-3 mb-6"><Users className="text-primary" size={22} /> ბავშვები</h3>
+          <h3 className="text-lg font-semibold flex items-center gap-3 mb-6"><Users className="text-primary" size={20} /> ბავშვების რაოდენობა</h3>
           <div className="flex items-center justify-between flex-wrap gap-5">
             <div className="flex items-center gap-5">
               <QtyBtn d={-1} onClick={() => setKids(Math.max(1, kids - 1))} disabled={kids <= 1} />
@@ -273,7 +315,7 @@ const CreateEvent: React.FC = () => {
               </div>
               <QtyBtn d={1} onClick={() => setKids(kids + 1)} />
             </div>
-            <div className="rounded-2xl border border-primary/25 bg-primary/5 px-5 py-3.5 flex flex-col gap-1">
+            <div className="rounded-lg border border-primary/25 bg-primary/5 px-5 py-3.5 flex flex-col gap-1">
               <div className="flex justify-between gap-10 text-sm font-bold">
                 <span className="text-muted-foreground">{INCLUDED_KIDS} შედის პაკეტში</span>
                 <Check size={15} className="text-primary" />
@@ -290,13 +332,13 @@ const CreateEvent: React.FC = () => {
 
         {/* MENU */}
         <div className={cardCls}>
-          <h3 className="text-lg md:text-2xl font-black uppercase flex items-center gap-3 mb-3"><UtensilsCrossed className="text-primary" size={22} /> მენიუ</h3>
+          <h3 className="text-lg font-semibold flex items-center gap-3 mb-3"><UtensilsCrossed className="text-primary" size={20} /> მენიუ</h3>
           <p className="text-muted-foreground text-sm font-bold mb-6">დაამატეთ დამატებითი პოზიციები (მშობლებისთვის / სტუმრებისთვის). ბაზისური მენიუ 20 ბავშვზე შედის პაკეტში.</p>
           <div className="flex flex-col gap-4">
             {Object.entries(menu).map(([catKey, cat]) => (
-              <div key={catKey} className="rounded-2xl border border-zinc-800/70 overflow-hidden">
+              <div key={catKey} className="rounded-lg border border-white/10 overflow-hidden">
                 <div className="px-5 py-3 bg-muted/30 border-b border-zinc-800/70">
-                  <div className="text-sm font-black uppercase tracking-wide text-primary">{(cat as any).title}</div>
+                  <div className="text-sm font-semibold text-primary">{(cat as any).title}</div>
                 </div>
                 <div className="divide-y divide-zinc-800/50 bg-zinc-900/40">
                   {(cat as any).items.map((item: any, idx: number) => {
@@ -325,7 +367,7 @@ const CreateEvent: React.FC = () => {
         {/* SERVICES */}
         <div className={cardCls}>
           <div className="flex items-baseline gap-3 mb-6">
-            <h3 className="text-lg md:text-2xl font-black uppercase flex items-center gap-3"><Sparkles className="text-primary" size={22} /> სერვისები</h3>
+            <h3 className="text-lg font-semibold flex items-center gap-3"><Sparkles className="text-primary" size={20} /> სერვისები</h3>
             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground border border-zinc-800 rounded-full px-3 py-1">არჩევითი</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -333,7 +375,7 @@ const CreateEvent: React.FC = () => {
               const sel = !!serviceSel[sv.id];
               return (
                 <button key={sv.id} type="button" onClick={() => setServiceSel({ ...serviceSel, [sv.id]: !sel })}
-                  className={`flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border text-left transition-all ${sel ? 'border-primary bg-primary/10' : 'border-zinc-800/70 bg-zinc-900/40 hover:border-primary/40'}`}>
+                  className={`flex items-center justify-between gap-3 px-4 py-3.5 rounded-lg border text-left transition-all ${sel ? 'border-primary bg-primary/10' : 'border-white/10 bg-[#151513] hover:border-primary/40'}`}>
                   <div className="min-w-0">
                     <div className="text-sm font-bold truncate">{sv.name}</div>
                     <div className="text-primary font-black text-xs">{sv.price}</div>
@@ -349,8 +391,8 @@ const CreateEvent: React.FC = () => {
       </div>
 
       {/* ============ SUMMARY / CREATE ============ */}
-      <aside className="lg:sticky lg:top-20 flex flex-col gap-4 rounded-[20px] md:rounded-[28px] bg-zinc-900/70 backdrop-blur-md border border-primary/25 shadow-2xl p-5 md:p-7 order-first lg:order-last">
-        <h3 className="text-base md:text-lg font-black uppercase text-primary tracking-widest flex items-center gap-2"><StickyNote size={17} /> შეჯამება</h3>
+      <aside className="lg:sticky lg:top-20 flex flex-col gap-4 rounded-xl bg-[#11110f] border border-primary/25 shadow-lg p-5 md:p-7 order-first lg:order-last">
+        <h3 className="text-base md:text-lg font-semibold text-primary flex items-center gap-2"><StickyNote size={17} /> შეკვეთის შეჯამება</h3>
 
         <div className="flex flex-col gap-2 text-sm font-bold">
           <div className="flex justify-between gap-4"><span className="text-muted-foreground">თარიღი / დრო</span><span className="text-right">{slotLabel}</span></div>
@@ -396,18 +438,31 @@ const CreateEvent: React.FC = () => {
             className="text-3xl md:text-4xl font-black text-primary tabular-nums">{fmt(totalPrice)}</motion.span>
         </div>
 
+        {depositAmount > 0 && (
+          <div className="border-t border-white/10 pt-3 space-y-2 text-sm">
+            <div className="flex justify-between gap-4 font-semibold text-emerald-400">
+              <span>ბე / უკვე გადახდილი</span>
+              <span className="tabular-nums">− {fmt(depositAmount)}</span>
+            </div>
+            <div className="flex justify-between gap-4 font-bold">
+              <span>დარჩენილი</span>
+              <span className="tabular-nums text-lg">{fmt(remainingTotal)}</span>
+            </div>
+          </div>
+        )}
+
         {error && (
-          <div className="p-3 rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive text-[13px] font-black flex items-start gap-2">
+          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-[13px] font-semibold flex items-start gap-2">
             <AlertTriangle size={15} className="shrink-0 mt-0.5" /> {error}
           </div>
         )}
 
         <button onClick={create} disabled={creating}
-          className="w-full py-4 rounded-2xl bg-primary text-primary-foreground border border-primary/30 font-black uppercase text-xs tracking-[0.2em] hover:opacity-90 disabled:opacity-60 transition-all flex items-center justify-center gap-3">
+          className="w-full py-3.5 rounded-md bg-primary text-primary-foreground border border-primary/30 font-bold text-sm hover:brightness-110 disabled:opacity-60 transition-all flex items-center justify-center gap-2">
           {creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} {creating ? 'იქმნება…' : 'ღონისძიების შექმნა'}
         </button>
         <button onClick={reset} disabled={creating}
-          className="w-full py-3 rounded-2xl border border-zinc-700/60 text-muted-foreground font-bold uppercase text-[10px] tracking-widest hover:text-foreground hover:border-zinc-500 transition-all flex items-center justify-center gap-2">
+          className="w-full py-3 rounded-md border border-white/10 text-muted-foreground font-medium text-xs hover:text-foreground hover:border-zinc-500 transition-all flex items-center justify-center gap-2">
           <X size={13} /> ფორმის გასუფთავება
         </button>
       </aside>

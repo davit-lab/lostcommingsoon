@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useContentStore } from '@/store/contentStore';
 import { Language } from '@/types';
 import { ASSETS, FONT_OPTIONS } from '@/constants';
-import { ArrowLeft, Save, RotateCcw, LogOut, Image, Type, DollarSign, FileText, UtensilsCrossed, HelpCircle, ShieldCheck, Palette, ChevronDown, Plus, Trash2, TextCursorInput, CalendarClock, PartyPopper, BellRing, PlusCircle, DoorOpen, ExternalLink, LayoutDashboard, Clapperboard } from 'lucide-react';
+import { ArrowLeft, Save, RotateCcw, LogOut, Image, Type, DollarSign, FileText, UtensilsCrossed, HelpCircle, ShieldCheck, Palette, ChevronDown, Plus, Trash2, TextCursorInput, CalendarClock, BellRing, PlusCircle, DoorOpen, ExternalLink, LayoutDashboard, Clapperboard, Menu, X } from 'lucide-react';
 import BookingsAdmin from '@/components/admin/BookingsAdmin';
 import TodayAdmin from '@/components/admin/TodayAdmin';
 import NotifySettings from '@/components/admin/NotifySettings';
@@ -22,18 +22,27 @@ const AdminLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md p-8 rounded-3xl bg-card border border-primary/20 shadow-2xl">
-        <h1 className="text-3xl font-vintage text-foreground uppercase mb-2 text-center">Admin Panel</h1>
-        <p className="text-muted-foreground text-center mb-8">Lost Lock Control</p>
-        {error && <div className="mb-4 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm text-center">{error}</div>}
+    <div className="min-h-screen bg-[#0c0c0b] flex items-center justify-center p-5">
+      <div className="w-full max-w-sm border border-white/10 bg-[#141412] shadow-2xl">
+        <div className="h-1 bg-primary" />
+        <div className="p-8 md:p-10">
+        <div className="mb-9">
+          <div className="font-vintage text-3xl text-foreground tracking-wide">LOST LOCK</div>
+          <p className="text-sm text-muted-foreground mt-2">ჯავშნებისა და ღონისძიებების მართვა</p>
+        </div>
+        {error && <div className="mb-4 p-3 border border-red-500/30 bg-red-500/5 text-red-300 text-sm">მომხმარებელი ან პაროლი არასწორია</div>}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-4 rounded-xl bg-muted border border-primary/20 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-4 rounded-xl bg-muted border border-primary/20 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary" />
-          <button type="submit" className="w-full py-4 rounded-xl bg-transparent text-primary border border-primary/30 font-black uppercase tracking-wider hover:bg-primary/10 transition-all">Login</button>
+          <label className="text-xs font-semibold text-zinc-400">მომხმარებელი
+            <input type="text" placeholder="შეიყვანეთ მომხმარებელი" value={username} onChange={(e) => setUsername(e.target.value)}
+              className="mt-2 w-full p-3.5 bg-black/20 border border-white/10 text-foreground placeholder:text-zinc-600 focus:outline-none focus:border-primary" />
+          </label>
+          <label className="text-xs font-semibold text-zinc-400">პაროლი
+            <input type="password" placeholder="შეიყვანეთ პაროლი" value={password} onChange={(e) => setPassword(e.target.value)}
+              className="mt-2 w-full p-3.5 bg-black/20 border border-white/10 text-foreground placeholder:text-zinc-600 focus:outline-none focus:border-primary" />
+          </label>
+          <button type="submit" className="w-full mt-2 py-3.5 bg-primary text-primary-foreground font-bold hover:brightness-110 transition-all">შესვლა</button>
         </form>
+        </div>
       </div>
     </div>
   );
@@ -46,7 +55,7 @@ interface TabGroupDef { label: string; tabs: TabDef[] }
 
 const TAB_GROUPS: TabGroupDef[] = [
   {
-    label: 'მთავარი',
+    label: 'დღიური სამუშაო',
     tabs: [
       { id: 'today', label: 'დღეს / ხვალ', icon: <LayoutDashboard size={17} /> },
       { id: 'bookings', label: 'ყველა ჯავშანი', icon: <CalendarClock size={17} /> },
@@ -54,28 +63,38 @@ const TAB_GROUPS: TabGroupDef[] = [
     ],
   },
   {
-    label: 'კონტენტი',
+    label: 'ვებსაიტის იერი',
     tabs: [
-      { id: 'background', label: 'Background', icon: <Palette size={17} /> },
-      { id: 'reels', label: 'რილები (ვიდეო)', icon: <Clapperboard size={17} /> },
-      { id: 'fonts', label: 'Fonts', icon: <TextCursorInput size={17} /> },
-      { id: 'assets', label: 'Assets / Media', icon: <Image size={17} /> },
-      { id: 'ui_ka', label: 'UI Texts (KA)', icon: <Type size={17} /> },
-      { id: 'ui_en', label: 'UI Texts (EN)', icon: <Type size={17} /> },
-      { id: 'nav_ka', label: 'Navigation (KA)', icon: <FileText size={17} /> },
-      { id: 'nav_en', label: 'Navigation (EN)', icon: <FileText size={17} /> },
-      { id: 'rooms_ka', label: 'Rooms (KA)', icon: <DoorOpen size={17} /> },
-      { id: 'rooms_en', label: 'Rooms (EN)', icon: <DoorOpen size={17} /> },
-      { id: 'services_ka', label: 'Services (KA)', icon: <DollarSign size={17} /> },
-      { id: 'services_en', label: 'Services (EN)', icon: <DollarSign size={17} /> },
-      { id: 'pricing_ka', label: 'Pricing (KA)', icon: <DollarSign size={17} /> },
-      { id: 'pricing_en', label: 'Pricing (EN)', icon: <DollarSign size={17} /> },
-      { id: 'menu_ka', label: 'Menu (KA)', icon: <UtensilsCrossed size={17} /> },
-      { id: 'menu_en', label: 'Menu (EN)', icon: <UtensilsCrossed size={17} /> },
-      { id: 'faq_ka', label: 'FAQ (KA)', icon: <HelpCircle size={17} /> },
-      { id: 'faq_en', label: 'FAQ (EN)', icon: <HelpCircle size={17} /> },
-      { id: 'rules_ka', label: 'Rules (KA)', icon: <ShieldCheck size={17} /> },
-      { id: 'rules_en', label: 'Rules (EN)', icon: <ShieldCheck size={17} /> },
+      { id: 'background', label: 'ფონი', icon: <Palette size={17} /> },
+      { id: 'assets', label: 'ლოგო და მედია', icon: <Image size={17} /> },
+      { id: 'fonts', label: 'შრიფტები', icon: <TextCursorInput size={17} /> },
+      { id: 'reels', label: 'ვიდეოები', icon: <Clapperboard size={17} /> },
+    ],
+  },
+  {
+    label: 'ქართული კონტენტი',
+    tabs: [
+      { id: 'ui_ka', label: 'მთავარი ტექსტები', icon: <Type size={17} /> },
+      { id: 'nav_ka', label: 'ნავიგაცია', icon: <FileText size={17} /> },
+      { id: 'rooms_ka', label: 'ოთახები', icon: <DoorOpen size={17} /> },
+      { id: 'services_ka', label: 'სერვისები', icon: <DollarSign size={17} /> },
+      { id: 'pricing_ka', label: 'ფასები', icon: <DollarSign size={17} /> },
+      { id: 'menu_ka', label: 'მენიუ', icon: <UtensilsCrossed size={17} /> },
+      { id: 'faq_ka', label: 'ხშირი კითხვები', icon: <HelpCircle size={17} /> },
+      { id: 'rules_ka', label: 'წესები', icon: <ShieldCheck size={17} /> },
+    ],
+  },
+  {
+    label: 'English content',
+    tabs: [
+      { id: 'ui_en', label: 'Main texts', icon: <Type size={17} /> },
+      { id: 'nav_en', label: 'Navigation', icon: <FileText size={17} /> },
+      { id: 'rooms_en', label: 'Rooms', icon: <DoorOpen size={17} /> },
+      { id: 'services_en', label: 'Services', icon: <DollarSign size={17} /> },
+      { id: 'pricing_en', label: 'Pricing', icon: <DollarSign size={17} /> },
+      { id: 'menu_en', label: 'Menu', icon: <UtensilsCrossed size={17} /> },
+      { id: 'faq_en', label: 'FAQ', icon: <HelpCircle size={17} /> },
+      { id: 'rules_en', label: 'Rules', icon: <ShieldCheck size={17} /> },
     ],
   },
   {
@@ -113,6 +132,7 @@ const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('today');
   const [saved, setSaved] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [openGroups, setOpenGroups] = useState<string[]>(['დღიური სამუშაო']);
 
   const showSaved = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
@@ -171,12 +191,10 @@ const AdminDashboard: React.FC = () => {
             </div>
 
             <div className="p-5 rounded-2xl bg-muted/40 border border-primary/10 flex flex-col gap-4">
-              <InputField label="Background Image URL (optional, overlays the color)" value={assets.mainBackground} onChange={(v) => { updateAssets({ mainBackground: v }); showSaved(); }} />
-              {assets.mainBackground && (
-                <div className="mt-2 rounded-2xl overflow-hidden border border-primary/20 max-w-md">
-                  <img src={assets.mainBackground} alt="Background preview" className="w-full h-48 object-cover" loading="lazy" decoding="async" width={400} height={192} />
-                </div>
-              )}
+              <p className="text-sm text-foreground">The background image is bundled with the site. Replace <code className="text-primary">public/background.jpg</code> in the project to change it.</p>
+              <div className="rounded-2xl overflow-hidden border border-primary/20 max-w-md">
+                <img src={`${import.meta.env.BASE_URL}background.jpg`} alt="Bundled background preview" className="w-full h-48 object-cover" loading="lazy" decoding="async" width={400} height={192} />
+              </div>
             </div>
           </div>
         );
@@ -496,77 +514,106 @@ const AdminDashboard: React.FC = () => {
   };
 
   const currentTab = ALL_TABS.find((t) => t.id === activeTab);
+  const activeGroup = TAB_GROUPS.find((g) => g.tabs.some((t) => t.id === activeTab));
+
+  const chooseTab = (tab: Tab, groupLabel: string) => {
+    setActiveTab(tab);
+    setOpenGroups((groups) => groups.includes(groupLabel) ? groups : [...groups, groupLabel]);
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+  };
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups((groups) => groups.includes(label) ? groups.filter((g) => g !== label) : [...groups, label]);
+  };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64 md:w-72' : 'w-0'} transition-all duration-300 bg-card border-r border-primary/20 overflow-hidden shrink-0 flex flex-col`}>
-        <div className="p-5 border-b border-primary/20 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-sm">L</div>
+    <div className="min-h-screen bg-[#0b0b0a] flex text-zinc-100">
+      {sidebarOpen && <button aria-label="დახურე მენიუ" onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-20 bg-black/70 lg:hidden" />}
+
+      <aside className={`fixed inset-y-0 left-0 z-30 w-[270px] border-r border-white/10 bg-[#11110f] transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:hidden'}`}>
+        <div className="h-16 px-5 border-b border-white/10 flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary flex items-center justify-center text-primary-foreground font-black text-sm">L</div>
           <div className="flex flex-col">
-            <span className="font-black text-foreground text-sm uppercase leading-none">Lost Lock</span>
-            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">Control Panel</span>
+            <span className="font-bold text-foreground text-sm uppercase tracking-wide leading-none">Lost Lock</span>
+            <span className="text-[10px] text-zinc-500 font-medium mt-1">მართვის პანელი</span>
           </div>
+          <button onClick={() => setSidebarOpen(false)} className="ml-auto p-1.5 text-zinc-500 hover:text-white lg:hidden"><X size={18} /></button>
         </div>
-        <nav className="flex-1 p-3 flex flex-col gap-5 overflow-y-auto">
-          {TAB_GROUPS.map((group) => (
-            <div key={group.label}>
-              <div className="px-3 mb-1.5 text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">{group.label}</div>
-              <div className="flex flex-col gap-0.5">
+        <nav className="h-[calc(100vh-128px)] px-3 py-4 overflow-y-auto ll-hide-scrollbar">
+          {TAB_GROUPS.map((group, groupIndex) => {
+            const groupOpen = groupIndex === 0 || openGroups.includes(group.label) || activeGroup?.label === group.label;
+            return (
+            <div key={group.label} className="mb-3">
+              {groupIndex === 0 ? (
+                <div className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-600">{group.label}</div>
+              ) : (
+                <button onClick={() => toggleGroup(group.label)} className="w-full px-3 py-2 flex items-center justify-between text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500 hover:text-zinc-300">
+                  {group.label}
+                  <ChevronDown size={13} className={`transition-transform ${groupOpen ? 'rotate-180' : ''}`} />
+                </button>
+              )}
+              {groupOpen && <div className="flex flex-col gap-0.5">
                 {group.tabs.map((tab) => {
                   const isCreate = tab.id === 'create';
                   return (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                      className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-bold transition-all ${isCreate ? 'bg-primary/15 text-primary border border-primary/30' :
-                        activeTab === tab.id ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent'}`}>
-                      {tab.icon} <span className="truncate">{tab.label}</span>
-                      {isCreate && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
+                    <button key={tab.id} onClick={() => chooseTab(tab.id, group.label)}
+                      className={`relative w-full flex items-center gap-3 px-3 py-2.5 text-left text-[13px] font-medium transition-colors ${
+                        activeTab === tab.id
+                          ? 'bg-white/[0.07] text-white before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-primary'
+                          : isCreate ? 'text-primary hover:bg-white/[0.04]' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                      }`}>
+                      <span className={activeTab === tab.id ? 'text-primary' : ''}>{tab.icon}</span>
+                      <span className="truncate">{tab.label}</span>
+                      {isCreate && <Plus size={14} className="ml-auto" />}
                     </button>
                   );
                 })}
-              </div>
+              </div>}
             </div>
-          ))}
+          )})}
         </nav>
-        <div className="p-3 border-t border-primary/20 flex flex-col gap-1">
+        <div className="h-16 px-3 border-t border-white/10 flex items-center gap-1">
           <button onClick={() => { resetToDefault(); showSaved(); }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-destructive hover:bg-destructive/10 transition-all">
-            <RotateCcw size={16} /> Reset All
+            title="საიტის კონტენტის აღდგენა"
+            className="p-2.5 text-zinc-600 hover:text-red-400 transition-colors">
+            <RotateCcw size={16} />
           </button>
           <button onClick={() => { logout(); window.location.hash = '#'; }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all">
-            <LogOut size={16} /> Logout
+            className="ml-auto flex items-center gap-2 px-3 py-2 text-xs font-medium text-zinc-500 hover:text-white transition-colors">
+            <LogOut size={15} /> გასვლა
           </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-h-screen min-w-0">
-        <header className="h-16 border-b border-primary/20 bg-card/50 backdrop-blur-xl flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
+        <header className="h-16 border-b border-white/10 bg-[#0b0b0a]/95 backdrop-blur flex items-center justify-between px-4 md:px-7 sticky top-0 z-10">
           <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground shrink-0">
-              <ArrowLeft size={18} className={`transition-transform ${sidebarOpen ? '' : 'rotate-180'}`} />
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-white/5 text-zinc-400 shrink-0">
+              {sidebarOpen ? <ArrowLeft size={18} /> : <Menu size={19} />}
             </button>
             <div className="min-w-0">
-              <div className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground">{TAB_GROUPS.find((g) => g.tabs.some((t) => t.id === activeTab))?.label}</div>
-              <div className="text-sm font-bold text-foreground truncate flex items-center gap-2">
-                {currentTab?.icon}{currentTab?.label}
-              </div>
+              <div className="text-[10px] font-medium text-zinc-600">{activeGroup?.label}</div>
+              <div className="text-sm font-semibold text-foreground truncate">{currentTab?.label}</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {saved && (
-              <span className="text-xs font-black text-green-500 flex items-center gap-1 animate-pulse">
-                <Save size={14} /> Saved!
+              <span className="text-xs font-medium text-emerald-400 flex items-center gap-1">
+                <Save size={14} /> შენახულია
               </span>
             )}
-            <a href="#" className="text-xs font-black text-primary hover:text-foreground transition-all flex items-center gap-1.5 px-3 py-2 rounded-lg border border-primary/20 hover:bg-primary/10">
-              <ExternalLink size={13} /> Back to Site
+            <button onClick={() => chooseTab('create', 'დღიური სამუშაო')} className="hidden sm:flex items-center gap-1.5 bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground hover:brightness-110">
+              <PlusCircle size={14} /> ახალი ღონისძიება
+            </button>
+            <a href="#" className="flex items-center gap-1.5 px-2 py-2 text-xs font-medium text-zinc-500 hover:text-white transition-colors">
+              <ExternalLink size={13} /> <span className="hidden md:inline">საიტზე დაბრუნება</span>
             </a>
           </div>
         </header>
-        <main className={`flex-1 p-5 md:p-8 overflow-y-auto ${activeTab === 'bookings' || activeTab === 'create' ? 'max-w-7xl' : 'max-w-4xl'}`}>
-          {renderTabContent()}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <div className={`w-full ${activeTab === 'bookings' || activeTab === 'create' || activeTab === 'today' ? 'max-w-[1440px]' : 'max-w-4xl'} mx-auto`}>
+            {renderTabContent()}
+          </div>
         </main>
       </div>
     </div>

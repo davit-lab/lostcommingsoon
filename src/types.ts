@@ -53,6 +53,7 @@ export interface LiveItem {
 
 export interface BookingRow {
   live_items?: LiveItem[] | null;
+  paid_amount?: number;
   id: string;
   ref_code: string;
   event_date: string | null;

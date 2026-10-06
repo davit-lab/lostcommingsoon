@@ -291,7 +291,7 @@ const BookingsAdmin: React.FC = () => {
 
                       {b.status !== 'cancelled' && (
                         <Section title="ბარი / Live Check — ღონისძიების დროს">
-                          <LiveCheck booking={b} onSaved={(items) => setRows((rs) => rs.map((r) => (r.id === b.id ? { ...r, live_items: items } : r)))} />
+                          <LiveCheck booking={b} onSaved={(items, paidAmount) => setRows((rs) => rs.map((r) => (r.id === b.id ? { ...r, live_items: items, paid_amount: paidAmount } : r)))} />
                         </Section>
                       )}
                     </div>

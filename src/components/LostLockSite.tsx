@@ -427,7 +427,7 @@ const LostLockSite: React.FC = () => {
       className="min-h-screen relative flex flex-col selection:bg-primary selection:text-primary-foreground overflow-x-hidden"
       style={{
         backgroundColor: assets.bgColor || undefined,
-        backgroundImage: assets.mainBackground ? `url(${assets.mainBackground})` : undefined,
+        backgroundImage: `url(${import.meta.env.BASE_URL}background.jpg)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
