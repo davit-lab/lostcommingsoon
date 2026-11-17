@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronRight, Check, ChevronDown, ArrowLeft, ArrowUpRight, Menu, X,
+  ChevronRight, ChevronLeft, Check, ChevronDown, ArrowLeft, ArrowUpRight, Menu, X,
   Facebook, Instagram, PhoneCall, ArrowRight as ArrowIcon, Share2
 } from 'lucide-react';
 import { useContentStore } from '@/store/contentStore';
-import { ServiceItem, Language } from '@/types';
+import { ServiceItem, Language, NavLink as SiteNavigationLink } from '@/types';
 import ReelsSection from '@/components/ReelsSection';
 import { REELS_SECTION_TITLE } from '@/config/reels';
 
@@ -42,56 +42,161 @@ const Logo = ({ className = "w-10 h-10" }: { className?: string }) => {
 };
 
 const LanguageSwitcher = ({ currentLang, setLang }: { currentLang: Language; setLang: (l: Language) => void }) => (
-  <div className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-sm p-1 rounded-full border border-zinc-700/50">
+  <div role="group" aria-label={currentLang === 'ka' ? 'ენის არჩევა' : 'Choose language'} className="flex items-center gap-0.5 rounded-md border border-white/15 bg-white/[0.03] p-1">
     {(['ka', 'en'] as Language[]).map((code) => (
-      <button key={code} onClick={() => setLang(code)}
-        className={`px-3 py-1 rounded-full text-[10px] font-black transition-all ${currentLang === code ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:text-foreground'}`}
-      >{code.toUpperCase()}</button>
+      <button
+        key={code}
+        type="button"
+        onClick={() => setLang(code)}
+        aria-pressed={currentLang === code}
+        className={`min-w-9 rounded-sm px-2 py-1.5 text-[10px] font-bold tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+          currentLang === code
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:text-foreground'
+        }`}
+      >
+        {code.toUpperCase()}
+      </button>
     ))}
   </div>
 );
 
-const Nav = ({ onNavigate, lang, setLang }: { onNavigate: (hash: string) => void; lang: Language; setLang: (l: Language) => void }) => {
+const Nav = ({ onNavigate, lang, setLang, currentHash }: {
+  onNavigate: (hash: string) => void;
+  lang: Language;
+  setLang: (l: Language) => void;
+  currentHash: string;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { translations } = useContentStore();
   const t = translations[lang];
+  const navLabel = lang === 'ka' ? 'მთავარი ნავიგაცია' : 'Main navigation';
+  const activeHref = (href: string) => {
+    if (href === '#') return currentHash === '#';
+    if (href === currentHash) return true;
+    if (href === '#reels' && currentHash.startsWith('#/reels/')) return true;
+    if (href === '#obstacles' && t.obstacles.some((item: { link: string }) => item.link === currentHash)) return true;
+    if (href === '#services' && t.services.some((item: { link: string }) => item.link === currentHash)) return true;
+    return false;
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   return (
-    <nav className="fixed top-0 left-0 w-full h-16 md:h-20 z-50 bg-black/70 backdrop-blur-md border-b border-zinc-800/50 flex items-center justify-between px-4 md:px-14">
-      <button onClick={() => onNavigate('#')} className="flex items-center gap-2 md:gap-4 group">
-        <Logo className="w-12 h-12 md:w-14 md:h-14 group-hover:scale-110 transition-transform" />
-        <span className="font-vintage text-sm md:text-2xl tracking-tight text-foreground uppercase">LOST-LOCK</span>
-      </button>
-      <div className="hidden lg:flex items-center gap-8">
-        {t.nav.map((link: any) => (
-          <button key={link.label} onClick={() => onNavigate(link.href)}
-            className="text-[11px] font-black uppercase tracking-[0.3em] text-foreground/90 hover:text-primary transition-all"
-          >{link.label}</button>
-        ))}
-      </div>
-      <div className="hidden lg:flex items-center gap-6">
-        <LanguageSwitcher currentLang={lang} setLang={setLang} />
-        <button onClick={() => onNavigate('#contact')} className="px-8 py-3 rounded-2xl bg-primary text-primary-foreground border border-primary/30 text-[10px] font-black hover:opacity-90 transition-all uppercase tracking-[0.2em]">{t.ui.book}</button>
-      </div>
-      <div className="lg:hidden flex items-center gap-3">
-        <LanguageSwitcher currentLang={lang} setLang={setLang} />
-        <button className="p-2 text-primary bg-zinc-900/60 backdrop-blur-sm rounded-lg border border-zinc-800/50" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#080808]">
+      <div className="flex h-[72px] items-center justify-between gap-4 px-4 sm:px-6 xl:h-20 xl:px-8 2xl:px-14">
+        <button
+          type="button"
+          onClick={() => onNavigate('#')}
+          aria-label="LOST-LOCK"
+          className="group flex shrink-0 items-center gap-2.5 sm:gap-3"
+        >
+          <Logo className="h-10 w-10 transition-transform duration-300 group-hover:scale-[1.04] sm:h-12 sm:w-12" />
+          <span className="font-vintage text-lg tracking-[0.12em] text-foreground sm:text-xl">LOST-LOCK</span>
         </button>
+
+        <nav aria-label={navLabel} className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
+          <div className="flex items-center gap-2 2xl:gap-3">
+            {t.nav.map((link: SiteNavigationLink) => {
+              const isActive = activeHref(link.href);
+              return (
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={() => onNavigate(link.href)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`relative whitespace-nowrap px-1.5 py-3 text-[11px] font-semibold transition-colors duration-200 after:absolute after:inset-x-1.5 after:bottom-1 after:h-px after:origin-center after:bg-primary after:transition-transform after:duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    isActive
+                      ? 'text-primary after:scale-x-100'
+                      : 'text-white/75 after:scale-x-0 hover:text-white hover:after:scale-x-100'
+                  }`}
+                >
+                  {link.label}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        <div className="hidden shrink-0 items-center gap-4 xl:flex 2xl:gap-5">
+          <LanguageSwitcher currentLang={lang} setLang={setLang} />
+          <button
+            type="button"
+            onClick={() => onNavigate('#contact')}
+            className="rounded-md border border-primary/70 bg-primary px-5 py-3 text-[11px] font-bold tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          >
+            {t.ui.book}
+          </button>
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-2.5 xl:hidden">
+          <LanguageSwitcher currentLang={lang} setLang={setLang} />
+          <button
+            ref={menuButtonRef}
+            type="button"
+            aria-label={isOpen ? (lang === 'ka' ? 'მენიუს დახურვა' : 'Close menu') : (lang === 'ka' ? 'მენიუს გახსნა' : 'Open menu')}
+            aria-expanded={isOpen}
+            aria-controls="site-mobile-navigation"
+            onClick={() => setIsOpen((open) => !open)}
+            className="flex h-10 w-10 items-center justify-center rounded-md border border-white/15 text-foreground transition-colors hover:border-primary/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {isOpen ? <X size={19} /> : <Menu size={19} />}
+          </button>
+        </div>
       </div>
+
       <AnimatePresence>
         {isOpen && (
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="absolute top-[72px] left-4 right-4 bg-zinc-900/60 backdrop-blur-sm rounded-2xl border border-zinc-800/50 p-8 flex flex-col gap-6 lg:hidden shadow-xl z-50">
-            {t.nav.map((link: any) => (
-              <button key={link.label} onClick={() => { onNavigate(link.href); setIsOpen(false); }}
-                className="text-2xl font-black text-muted-foreground hover:text-primary text-left">{link.label}</button>
-            ))}
-            <button onClick={() => { onNavigate('#contact'); setIsOpen(false); }}
-              className="mt-4 w-full py-5 bg-primary border border-primary/30 rounded-2xl text-center text-primary-foreground font-black uppercase text-xs hover:opacity-90 transition-all">{t.ui.book}</button>
+          <motion.div
+            id="site-mobile-navigation"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="absolute inset-x-0 top-full max-h-[calc(100dvh-72px)] overflow-y-auto border-b border-white/10 bg-[#080808] px-5 pb-6 pt-3 shadow-2xl sm:px-8 xl:hidden"
+          >
+            <nav aria-label={navLabel} className="flex flex-col">
+              {t.nav.map((link: SiteNavigationLink) => {
+                const isActive = activeHref(link.href);
+                return (
+                  <button
+                    key={link.label}
+                    type="button"
+                    onClick={() => { onNavigate(link.href); setIsOpen(false); }}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`border-b border-white/[0.07] py-3.5 pl-3 text-left text-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+                      isActive
+                        ? 'border-l-2 border-l-primary text-primary'
+                        : 'border-l-2 border-l-transparent text-white/75 hover:text-white'
+                    }`}
+                  >
+                    {link.label}
+                  </button>
+                );
+              })}
+            </nav>
+            <button
+              type="button"
+              onClick={() => { onNavigate('#contact'); setIsOpen(false); }}
+              className="mt-5 w-full rounded-md border border-primary/70 bg-primary px-5 py-3.5 text-center text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              {t.ui.book}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </header>
   );
 };
 
@@ -131,17 +236,106 @@ const CardComp: React.FC<{ item: ServiceItem; onClick: () => void; lang: Languag
             {copied ? <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}><Check size={15} /></motion.div> : <Share2 size={15} />}
           </AnimatePresence>
         </button>
-        <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/60 backdrop-blur-sm px-5 md:px-6 py-4 md:py-5 flex justify-between items-center">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[9px] font-black text-primary uppercase tracking-[0.4em]">{item.category}</span>
-            <h3 className="text-lg md:text-xl font-black text-white tracking-tight uppercase leading-none">{item.name}</h3>
+        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between gap-2 bg-zinc-900/70 px-3 py-3 backdrop-blur-sm sm:px-5 sm:py-4 md:px-6 md:py-5">
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className="truncate text-[8px] font-black uppercase tracking-[0.18em] text-primary sm:text-[9px] sm:tracking-[0.3em]">{item.category}</span>
+            <h3 className="line-clamp-2 break-words text-xs font-black uppercase leading-tight tracking-tight text-white sm:text-lg md:text-xl">{item.name}</h3>
           </div>
-          <div className="p-2.5 rounded-full bg-transparent text-primary border border-primary/30 shrink-0 group-hover:rotate-45 transition-transform duration-500">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-black/20 text-primary transition-transform duration-300 group-hover:rotate-45 sm:h-10 sm:w-10">
             <ArrowUpRight size={15} />
           </div>
         </div>
       </div>
     </motion.div>
+  );
+};
+
+const ProductImageSlider: React.FC<{ item: ServiceItem; lang: Language }> = ({ item, lang }) => {
+  const images = Array.from(new Set([item.image, ...(item.images || [])].filter(Boolean)));
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (images.length < 2 || isPaused) return;
+    const timer = window.setInterval(() => {
+      setActiveIndex((index) => (index + 1) % images.length);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [images.length, isPaused]);
+
+  const showPrevious = () => {
+    setActiveIndex((index) => (index - 1 + images.length) % images.length);
+  };
+  const showNext = () => {
+    setActiveIndex((index) => (index + 1) % images.length);
+  };
+
+  return (
+    <div
+      className="relative aspect-square overflow-hidden rounded-[24px] border border-white/10 bg-zinc-900/60 shadow-xl sm:rounded-[32px] lg:aspect-[4/3]"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={lang === 'ka' ? `${item.name} ფოტოები` : `${item.name} photos`}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={() => setIsPaused(false)}
+    >
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={images[activeIndex]}
+          src={images[activeIndex]}
+          alt={`${item.name} ${activeIndex + 1}`}
+          className="absolute inset-0 h-full w-full object-cover"
+          initial={{ opacity: 0.65 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0.65 }}
+          transition={{ duration: 0.35 }}
+          decoding="async"
+          loading="eager"
+          width={800}
+          height={800}
+        />
+      </AnimatePresence>
+
+      {images.length > 1 && (
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-gradient-to-t from-black/80 via-black/45 to-transparent px-4 pb-4 pt-12 sm:px-5 sm:pb-5">
+          <button
+            type="button"
+            onClick={showPrevious}
+            aria-label={lang === 'ka' ? 'წინა ფოტო' : 'Previous photo'}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/25 bg-black/50 text-white transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="flex min-w-0 items-center justify-center gap-2" role="group" aria-label={lang === 'ka' ? 'ფოტოს არჩევა' : 'Choose photo'}>
+            {images.map((image, index) => (
+              <button
+                key={image}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                aria-label={lang === 'ka' ? `ფოტო ${index + 1}` : `Photo ${index + 1}`}
+                aria-pressed={activeIndex === index}
+                className={`h-1.5 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  activeIndex === index ? 'w-6 bg-primary' : 'w-1.5 bg-white/60 hover:bg-white'
+                }`}
+              />
+            ))}
+          </div>
+          <span className="sr-only" aria-live="polite">
+            {activeIndex + 1} / {images.length}
+          </span>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label={lang === 'ka' ? 'შემდეგი ფოტო' : 'Next photo'}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/25 bg-black/50 text-white transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -194,6 +388,9 @@ const LostLockSite: React.FC = () => {
     const itemMatch = allItems.find((item: any) => item.link === currentHash);
 
     if (itemMatch) {
+      const relatedItems = (t.obstacles.some((item: any) => item.link === currentHash) ? t.obstacles : t.services)
+        .filter((item: any) => item.link !== currentHash);
+
       return (
         <div className="flex flex-col items-center py-12 md:py-24 px-4 md:px-14 max-w-[1400px] mx-auto gap-12 md:gap-20">
           <div className="w-full">
@@ -203,24 +400,9 @@ const LostLockSite: React.FC = () => {
               <span className="font-black text-[11px] md:text-xs uppercase tracking-[0.4em]">{t.ui.backToList}</span>
             </button>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 items-start">
+          <div className="grid w-full grid-cols-1 items-start gap-12 md:gap-20 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="flex flex-col gap-4">
-              <div className="relative aspect-square rounded-[24px] md:rounded-[40px] overflow-hidden border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
-                <img src={itemMatch.image} alt={itemMatch.name} className="w-full h-full object-cover" loading="lazy" decoding="async" width={600} height={600} />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="relative aspect-square rounded-[16px] md:rounded-[24px] overflow-hidden border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
-                    {itemMatch.images && itemMatch.images[i] ? (
-                      <img src={itemMatch.images[i]} alt={`${itemMatch.name} ${i + 2}`} className="w-full h-full object-cover" loading="lazy" decoding="async" width={200} height={200} />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <ProductImageSlider key={itemMatch.id} item={itemMatch} lang={lang} />
               {itemMatch.video && (
                 <div className="relative aspect-video rounded-[24px] md:rounded-[40px] border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
                   <video src={itemMatch.video} controls playsInline preload="metadata" className="w-full h-full object-contain bg-black rounded-[24px] md:rounded-[40px]" />
@@ -230,7 +412,11 @@ const LostLockSite: React.FC = () => {
             <div className="flex flex-col gap-8 md:gap-12 lg:sticky lg:top-32">
               <div className="flex flex-col gap-4 md:gap-6">
                 <span className="text-primary font-black uppercase tracking-[0.5em] text-[10px] md:text-xs">{itemMatch.category}</span>
-                <h1 className="text-5xl md:text-8xl font-vintage text-foreground uppercase leading-[1] md:leading-[0.8]">{itemMatch.name}</h1>
+                <div className="rounded-xl border border-primary/25 bg-black/35 p-4 shadow-lg sm:rounded-2xl sm:p-6">
+                  <h1 className="break-words font-vintage text-3xl uppercase leading-tight text-foreground sm:text-4xl md:text-5xl">
+                    {itemMatch.name}
+                  </h1>
+                </div>
                 {itemMatch.price && <span className="text-3xl md:text-5xl font-black text-primary mt-2 md:mt-4">{itemMatch.price}</span>}
               </div>
               <div className="p-8 md:p-10 rounded-[24px] md:rounded-[32px] bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 shadow-xl">
@@ -239,6 +425,23 @@ const LostLockSite: React.FC = () => {
                <button onClick={() => navigateTo('#contact')} className="py-5 md:py-7 rounded-[24px] md:rounded-[32px] bg-primary text-primary-foreground border border-primary/30 font-black text-lg md:text-2xl hover:opacity-90 transition-all uppercase tracking-widest">{t.ui.book}</button>
             </div>
           </div>
+          {relatedItems.length > 0 && (
+            <section aria-labelledby="related-items-title" className="w-full border-t border-white/10 pt-10 md:pt-14">
+              <h2 id="related-items-title" className="mb-7 font-vintage text-3xl leading-tight text-foreground sm:text-4xl md:mb-10 md:text-5xl">
+                {lang === 'ka' ? 'შესაძლოა დაგაინტერესოთ' : 'Maybe you will be interested'}
+              </h2>
+              <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {relatedItems.map((item: any) => (
+                  <CardComp
+                    key={item.id}
+                    item={item}
+                    lang={lang}
+                    onClick={() => navigateTo(item.link)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       );
     }
@@ -398,8 +601,8 @@ const LostLockSite: React.FC = () => {
                 <h2 className="text-4xl md:text-8xl font-vintage text-foreground uppercase leading-none">{t.ui.rooms}</h2>
                 <button onClick={() => navigateTo('#obstacles')} className="text-[10px] font-black uppercase text-primary hover:text-foreground flex items-center gap-3 bg-zinc-900/60 backdrop-blur-sm px-6 py-3 rounded-full border border-zinc-700/50 transition-all">{t.ui.seeAll} <ChevronRight size={16} /></button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
-                {t.obstacles.slice(0, 3).map((item: any) => <CardComp key={item.id} item={item} lang={lang} onClick={() => navigateTo(item.link)} />)}
+              <div className="grid grid-cols-2 gap-4 sm:gap-8 md:grid-cols-3 md:gap-8 lg:grid-cols-4">
+                {t.obstacles.map((item: any) => <CardComp key={item.id} item={item} lang={lang} onClick={() => navigateTo(item.link)} />)}
               </div>
             </section>
             <div className="w-full h-px bg-zinc-800 max-w-[1400px]" />
@@ -408,8 +611,8 @@ const LostLockSite: React.FC = () => {
                 <h2 className="text-4xl md:text-8xl font-vintage text-foreground uppercase leading-none">{t.ui.services}</h2>
                 <button onClick={() => navigateTo('#services')} className="text-[10px] font-black uppercase text-primary hover:text-foreground flex items-center gap-3 bg-zinc-900/60 backdrop-blur-sm px-6 py-3 rounded-full border border-zinc-700/50 transition-all">{t.ui.seeAll} <ChevronRight size={16} /></button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
-                {t.services.slice(0, 3).map((item: any) => <CardComp key={item.id} item={item} lang={lang} onClick={() => navigateTo(item.link)} />)}
+              <div className="grid grid-cols-2 gap-4 sm:gap-8 md:grid-cols-3 md:gap-8 lg:grid-cols-4">
+                {t.services.map((item: any) => <CardComp key={item.id} item={item} lang={lang} onClick={() => navigateTo(item.link)} />)}
               </div>
             </section>
             <div className="w-full h-px bg-zinc-800 max-w-[1400px]" />
@@ -433,8 +636,8 @@ const LostLockSite: React.FC = () => {
         backgroundAttachment: 'fixed',
       }}
     >
-      {!isReelsView && <Nav onNavigate={navigateTo} lang={lang} setLang={setLang} />}
-      <main className={`${isReelsView ? '' : 'pt-16 md:pt-20'} flex-grow relative`}>
+      {!isReelsView && <Nav onNavigate={navigateTo} lang={lang} setLang={setLang} currentHash={currentHash} />}
+      <main className={`${isReelsView ? '' : 'pt-[72px] xl:pt-20'} flex-grow relative`}>
         <AnimatePresence mode="wait">
           <motion.div key={`${currentHash}-${lang}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
             {renderContent()}
@@ -442,40 +645,42 @@ const LostLockSite: React.FC = () => {
         </AnimatePresence>
       </main>
       {!isReelsView && (
-      <footer className="w-full py-16 md:py-32 px-4 md:px-14 border-t border-zinc-800 bg-black mt-auto relative z-10">
-        <div className="max-w-[1400px] mx-auto flex flex-col gap-12 md:gap-24">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-12">
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center gap-6">
-                <Logo className="w-16 h-16 md:w-24 md:h-24" />
-                <h2 className="text-5xl md:text-9xl font-vintage text-foreground uppercase">LOST-LOCK</h2>
+      <footer className="relative z-10 mt-auto w-full border-t border-white/10 bg-gradient-to-b from-black/65 via-black/90 to-black px-4 py-8 sm:px-6 md:px-14 md:py-10">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
+          <div className="grid items-center gap-6 md:grid-cols-[1fr_auto_minmax(260px,360px)] md:gap-8">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <Logo className="h-10 w-10 md:h-12 md:w-12" />
+                <h2 className="font-vintage text-2xl uppercase tracking-wide text-foreground sm:text-3xl">LOST-LOCK</h2>
               </div>
-              <p className="text-lg md:text-2xl font-bold text-muted-foreground max-w-sm">{t.ui.footerDesc}</p>
+              <p className="max-w-sm text-sm font-medium leading-relaxed text-muted-foreground md:text-base">{t.ui.footerDesc}</p>
             </div>
-            <div className="grid grid-cols-2 gap-20">
-              <div className="flex flex-col gap-8">
-                <span className="text-[10px] font-black uppercase text-primary">{t.ui.product}</span>
-                <div className="flex flex-col gap-4 font-bold text-sm md:text-xl">
-                  <button onClick={() => navigateTo('#obstacles')} className="text-muted-foreground hover:text-primary text-left">{t.ui.rooms}</button>
-                  <button onClick={() => navigateTo('#services')} className="text-muted-foreground hover:text-primary text-left">{t.ui.services}</button>
-                  <button onClick={() => navigateTo('#menu')} className="text-muted-foreground hover:text-primary text-left">{t.ui.menuTitle}</button>
-                  <button onClick={() => navigateTo('#contact')} className="text-muted-foreground hover:text-primary text-left">{t.ui.contactUs}</button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-8">
-                <span className="text-[10px] font-black uppercase text-primary">{t.ui.company}</span>
-                <div className="flex flex-col gap-4 font-bold text-sm md:text-xl">
-                  <button onClick={() => navigateTo('#faq')} className="text-muted-foreground hover:text-primary text-left">{t.ui.faq}</button>
-                  <button onClick={() => navigateTo('#privacy')} className="text-muted-foreground hover:text-primary text-left">{t.ui.rulesTitle}</button>
-                </div>
-              </div>
+            <a href="tel:+995568967277" className="flex w-fit items-center gap-3 text-white/75 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <PhoneCall size={19} className="text-primary/80" />
+              <span className="flex flex-col">
+                <span className="text-[10px] font-medium text-muted-foreground">{t.ui.callUs}</span>
+                <span className="text-base font-semibold tracking-wide sm:text-lg">568 96 72 77</span>
+              </span>
+            </a>
+            <div className="h-40 overflow-hidden rounded-lg border border-primary/20 md:h-36">
+              <iframe
+                title={lang === 'ka' ? 'Lost Lock-ის მდებარეობა Google Maps-ზე' : 'Lost Lock location on Google Maps'}
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d993.4!2d44.7309356!3d41.7092913!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x40447342e62489f5%3A0xb1f017cf712d9384!2sLostlock!5e0!3m2!1ska!2sge!4v1"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
             </div>
           </div>
-          <div className="pt-16 border-t border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="text-muted-foreground/40 text-[10px] font-black uppercase tracking-widest">{t.ui.copyright}</div>
-            <div className="flex gap-10">
-              <a href="https://www.instagram.com/lostlock_official/" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground transition-all transform hover:scale-110"><Instagram size={28} /></a>
-              <a href="https://www.facebook.com/lostlocklost" target="_blank" rel="noreferrer" className="text-primary hover:text-foreground transition-all transform hover:scale-110"><Facebook size={28} /></a>
+          <div className="flex flex-col-reverse items-center justify-between gap-4 border-t border-white/10 pt-5 sm:flex-row">
+            <div className="text-center text-xs font-semibold tracking-wide text-white/65 sm:text-left sm:text-sm">
+              {t.ui.copyright}
+            </div>
+            <div className="flex gap-5">
+              <a href="https://www.instagram.com/lostlock_official/" target="_blank" rel="noreferrer" aria-label="Instagram" className="text-primary transition-colors hover:text-foreground"><Instagram size={21} /></a>
+              <a href="https://www.facebook.com/lostlocklost" target="_blank" rel="noreferrer" aria-label="Facebook" className="text-primary transition-colors hover:text-foreground"><Facebook size={21} /></a>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useContentStore } from '@/store/contentStore';
-import { Language } from '@/types';
+import { Language, ServiceItem } from '@/types';
 import { ASSETS, FONT_OPTIONS } from '@/constants';
 import { ArrowLeft, Save, RotateCcw, LogOut, Image, Type, DollarSign, FileText, UtensilsCrossed, HelpCircle, ShieldCheck, Palette, ChevronDown, Plus, Trash2, TextCursorInput, CalendarClock, BellRing, PlusCircle, DoorOpen, ExternalLink, LayoutDashboard, Clapperboard, Menu, X } from 'lucide-react';
 import BookingsAdmin from '@/components/admin/BookingsAdmin';
@@ -72,29 +72,16 @@ const TAB_GROUPS: TabGroupDef[] = [
     ],
   },
   {
-    label: 'ქართული კონტენტი',
+    label: 'კონტენტი / Bilingual content',
     tabs: [
-      { id: 'ui_ka', label: 'მთავარი ტექსტები', icon: <Type size={17} /> },
-      { id: 'nav_ka', label: 'ნავიგაცია', icon: <FileText size={17} /> },
-      { id: 'rooms_ka', label: 'ოთახები', icon: <DoorOpen size={17} /> },
-      { id: 'services_ka', label: 'სერვისები', icon: <DollarSign size={17} /> },
-      { id: 'pricing_ka', label: 'ფასები', icon: <DollarSign size={17} /> },
-      { id: 'menu_ka', label: 'მენიუ', icon: <UtensilsCrossed size={17} /> },
-      { id: 'faq_ka', label: 'ხშირი კითხვები', icon: <HelpCircle size={17} /> },
-      { id: 'rules_ka', label: 'წესები', icon: <ShieldCheck size={17} /> },
-    ],
-  },
-  {
-    label: 'English content',
-    tabs: [
-      { id: 'ui_en', label: 'Main texts', icon: <Type size={17} /> },
-      { id: 'nav_en', label: 'Navigation', icon: <FileText size={17} /> },
-      { id: 'rooms_en', label: 'Rooms', icon: <DoorOpen size={17} /> },
-      { id: 'services_en', label: 'Services', icon: <DollarSign size={17} /> },
-      { id: 'pricing_en', label: 'Pricing', icon: <DollarSign size={17} /> },
-      { id: 'menu_en', label: 'Menu', icon: <UtensilsCrossed size={17} /> },
-      { id: 'faq_en', label: 'FAQ', icon: <HelpCircle size={17} /> },
-      { id: 'rules_en', label: 'Rules', icon: <ShieldCheck size={17} /> },
+      { id: 'ui_ka', label: 'მთავარი ტექსტები / Main texts', icon: <Type size={17} /> },
+      { id: 'nav_ka', label: 'ნავიგაცია / Navigation', icon: <FileText size={17} /> },
+      { id: 'rooms_ka', label: 'ოთახები / Rooms', icon: <DoorOpen size={17} /> },
+      { id: 'services_ka', label: 'სერვისები / Services', icon: <DollarSign size={17} /> },
+      { id: 'pricing_ka', label: 'ფასები / Pricing', icon: <DollarSign size={17} /> },
+      { id: 'menu_ka', label: 'მენიუ / Menu', icon: <UtensilsCrossed size={17} /> },
+      { id: 'faq_ka', label: 'ხშირი კითხვები / FAQ', icon: <HelpCircle size={17} /> },
+      { id: 'rules_ka', label: 'წესები / Rules', icon: <ShieldCheck size={17} /> },
     ],
   },
   {
@@ -120,6 +107,20 @@ const InputField = ({ label, value, onChange, multiline = false }: { label: stri
   </div>
 );
 
+const BilingualField = ({ label, ka, en, onChangeKa, onChangeEn, multiline = false }: {
+  label: string;
+  ka: string;
+  en: string;
+  onChangeKa: (value: string) => void;
+  onChangeEn: (value: string) => void;
+  multiline?: boolean;
+}) => (
+  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+    <InputField label={`${label} · ქართული`} value={ka} onChange={onChangeKa} multiline={multiline} />
+    <InputField label={`${label} · English`} value={en} onChange={onChangeEn} multiline={multiline} />
+  </div>
+);
+
 const SectionTitle: React.FC<{ title: string; desc?: string }> = ({ title, desc }) => (
   <div className="mb-6">
     <h2 className="font-vintage text-2xl md:text-3xl text-foreground">{title}</h2>
@@ -135,6 +136,25 @@ const AdminDashboard: React.FC = () => {
   const [openGroups, setOpenGroups] = useState<string[]>(['დღიური სამუშაო']);
 
   const showSaved = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const updateBothLanguages = (path: string, value: string | boolean) => {
+    updateTranslation('ka', path, value);
+    updateTranslation('en', path, value);
+    showSaved();
+  };
+  const ensureEnglishItem = (collection: 'obstacles' | 'services', item: ServiceItem) => {
+    const englishItems: ServiceItem[] = useContentStore.getState().translations.en[collection];
+    const existingIndex = englishItems.findIndex((entry) => entry.id === item.id);
+    if (existingIndex >= 0) return existingIndex;
+
+    const translatedItem: ServiceItem = {
+      ...item,
+      name: '',
+      category: collection === 'obstacles' ? 'Rooms' : 'Services',
+      description: '',
+    };
+    updateTranslation('en', collection, [...englishItems, translatedItem]);
+    return englishItems.length;
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -288,222 +308,403 @@ const AdminDashboard: React.FC = () => {
         );
       case 'ui_ka':
       case 'ui_en': {
-        const lang = activeTab.endsWith('_ka') ? 'ka' : 'en' as Language;
-        const ui = translations[lang].ui;
+        const uiKa = translations.ka.ui;
+        const uiEn = translations.en.ui;
         return (
           <div className="flex flex-col gap-6">
-            <SectionTitle title={`UI Texts (${lang.toUpperCase()})`} />
-            {Object.entries(ui).map(([key, val]) => (
-              <InputField key={key} label={key} value={val as string} onChange={(v) => { updateTranslation(lang, `ui.${key}`, v); showSaved(); }} />
+            <SectionTitle title="მთავარი ტექსტები / Main texts" desc="Edit Georgian and English together." />
+            {Object.entries(uiKa).map(([key, val]) => (
+              <BilingualField
+                key={key}
+                label={key}
+                ka={String(val ?? '')}
+                en={String(uiEn[key] ?? '')}
+                onChangeKa={(v) => { updateTranslation('ka', `ui.${key}`, v); showSaved(); }}
+                onChangeEn={(v) => { updateTranslation('en', `ui.${key}`, v); showSaved(); }}
+              />
             ))}
           </div>
         );
       }
       case 'nav_ka':
       case 'nav_en': {
-        const lang = activeTab.endsWith('_ka') ? 'ka' : 'en' as Language;
-        const nav = translations[lang].nav;
+        const navKa = translations.ka.nav;
+        const navEn = translations.en.nav;
         return (
           <div className="flex flex-col gap-6">
-            <SectionTitle title={`Navigation (${lang.toUpperCase()})`} />
-            {nav.map((item: any, idx: number) => (
+            <SectionTitle title="ნავიგაცია / Navigation" desc="Labels are translated; each link destination is shared." />
+            {navKa.map((item: any, idx: number) => (
               <div key={idx} className="p-4 rounded-2xl bg-muted/50 border border-primary/10 flex flex-col gap-3">
-                <InputField label={`Link ${idx + 1} - Label`} value={item.label} onChange={(v) => { updateTranslation(lang, `nav.${idx}.label`, v); showSaved(); }} />
-                <InputField label={`Link ${idx + 1} - Href`} value={item.href} onChange={(v) => { updateTranslation(lang, `nav.${idx}.href`, v); showSaved(); }} />
+                <BilingualField
+                  label={`Link ${idx + 1} · Label`}
+                  ka={item.label}
+                  en={navEn[idx]?.label || ''}
+                  onChangeKa={(v) => { updateTranslation('ka', `nav.${idx}.label`, v); showSaved(); }}
+                  onChangeEn={(v) => { updateTranslation('en', `nav.${idx}.label`, v); showSaved(); }}
+                />
+                <InputField label={`Link ${idx + 1} · Destination`} value={item.href} onChange={(v) => updateBothLanguages(`nav.${idx}.href`, v)} />
                 <button onClick={() => {
-                  const newNav = [...nav]; newNav.splice(idx, 1);
-                  updateTranslation(lang, 'nav', newNav); showSaved();
+                  const newNavKa = [...navKa]; newNavKa.splice(idx, 1);
+                  const newNavEn = [...navEn]; newNavEn.splice(idx, 1);
+                  updateTranslation('ka', 'nav', newNavKa);
+                  updateTranslation('en', 'nav', newNavEn);
+                  showSaved();
                 }} className="self-end text-destructive text-xs font-black flex items-center gap-1 hover:opacity-70"><Trash2 size={14} /> Remove</button>
               </div>
             ))}
             <button onClick={() => {
-              updateTranslation(lang, 'nav', [...nav, { label: 'New Link', href: '#new' }]); showSaved();
+              updateTranslation('ka', 'nav', [...navKa, { label: 'ახალი ბმული', href: '#new' }]);
+              updateTranslation('en', 'nav', [...navEn, { label: 'New Link', href: '#new' }]);
+              showSaved();
             }} className="flex items-center gap-2 text-primary font-black text-sm hover:opacity-70"><Plus size={16} /> Add Nav Link</button>
           </div>
         );
       }
       case 'rooms_ka':
       case 'rooms_en': {
-        const lang = activeTab.endsWith('_ka') ? 'ka' : 'en' as Language;
-        const items = translations[lang].obstacles;
+        const itemsKa: ServiceItem[] = translations.ka.obstacles;
+        const itemsEn: ServiceItem[] = translations.en.obstacles;
         return (
           <div className="flex flex-col gap-6">
-            <SectionTitle title={`Rooms (${lang.toUpperCase()})`} />
-            {items.map((item: any, idx: number) => (
-              <details key={idx} className="group border border-primary/20 rounded-2xl overflow-hidden">
+            <SectionTitle title="ოთახები / Rooms" desc="Add translations side by side. Images and video are shared between both languages." />
+            {itemsKa.map((item: ServiceItem, idx: number) => {
+              const enIdx = itemsEn.findIndex((candidate) => candidate.id === item.id);
+              const translatedItem: Partial<ServiceItem> = enIdx >= 0 ? itemsEn[enIdx] : {};
+              const updateEnglishField = (field: keyof ServiceItem, value: string | string[]) => {
+                const targetIndex = enIdx >= 0 ? enIdx : ensureEnglishItem('obstacles', item);
+                updateTranslation('en', `obstacles.${targetIndex}.${field}`, value);
+                showSaved();
+              };
+              const updateSharedImages = (imageIndex: number, value: string) => {
+                const images = [...(item.images || ['', '', ''])];
+                images[imageIndex] = value;
+                updateTranslation('ka', `obstacles.${idx}.images`, images);
+                updateEnglishField('images', images);
+                showSaved();
+              };
+              return (
+              <details key={item.id} className="group border border-primary/20 rounded-2xl overflow-hidden">
                 <summary className="p-4 font-black text-foreground cursor-pointer flex justify-between items-center bg-muted/30 hover:bg-muted/50">
-                  {item.name} <ChevronDown size={18} className="group-open:rotate-180 transition-transform text-primary" />
+                  {item.name} / {translatedItem.name || 'English translation needed'} <ChevronDown size={18} className="group-open:rotate-180 transition-transform text-primary" />
                 </summary>
                 <div className="p-4 flex flex-col gap-3">
-                  <InputField label="Name" value={item.name} onChange={(v) => { updateTranslation(lang, `obstacles.${idx}.name`, v); showSaved(); }} />
-                  <InputField label="Category" value={item.category} onChange={(v) => { updateTranslation(lang, `obstacles.${idx}.category`, v); showSaved(); }} />
-                  <InputField label="Main Image URL" value={item.image} onChange={(v) => { updateTranslation(lang, `obstacles.${idx}.image`, v); showSaved(); }} />
-                  <InputField label="Image 2 URL" value={(item.images && item.images[0]) || ''} onChange={(v) => { const imgs = [...(item.images || ['', '', ''])]; imgs[0] = v; updateTranslation(lang, `obstacles.${idx}.images`, imgs); showSaved(); }} />
-                  <InputField label="Image 3 URL" value={(item.images && item.images[1]) || ''} onChange={(v) => { const imgs = [...(item.images || ['', '', ''])]; imgs[1] = v; updateTranslation(lang, `obstacles.${idx}.images`, imgs); showSaved(); }} />
-                  <InputField label="Image 4 URL" value={(item.images && item.images[2]) || ''} onChange={(v) => { const imgs = [...(item.images || ['', '', ''])]; imgs[2] = v; updateTranslation(lang, `obstacles.${idx}.images`, imgs); showSaved(); }} />
-                  <InputField label="Video URL" value={item.video || ''} onChange={(v) => { updateTranslation(lang, `obstacles.${idx}.video`, v); showSaved(); }} />
-                  <InputField label="Description" value={item.description} onChange={(v) => { updateTranslation(lang, `obstacles.${idx}.description`, v); showSaved(); }} multiline />
+                  <BilingualField
+                    label="Name"
+                    ka={item.name}
+                    en={translatedItem.name || ''}
+                    onChangeKa={(v) => { updateTranslation('ka', `obstacles.${idx}.name`, v); showSaved(); }}
+                    onChangeEn={(v) => updateEnglishField('name', v)}
+                  />
+                  <BilingualField
+                    label="Category"
+                    ka={item.category}
+                    en={translatedItem.category || ''}
+                    onChangeKa={(v) => { updateTranslation('ka', `obstacles.${idx}.category`, v); showSaved(); }}
+                    onChangeEn={(v) => updateEnglishField('category', v)}
+                  />
+                  <InputField label="Main Image URL · shared" value={item.image} onChange={(v) => {
+                    updateTranslation('ka', `obstacles.${idx}.image`, v);
+                    updateEnglishField('image', v);
+                    showSaved();
+                  }} />
+                  {[0, 1, 2].map((imageIndex) => (
+                    <InputField key={imageIndex} label={`Image ${imageIndex + 2} URL · shared`} value={item.images?.[imageIndex] || ''} onChange={(v) => updateSharedImages(imageIndex, v)} />
+                  ))}
+                  <InputField label="Video URL · shared" value={item.video || ''} onChange={(v) => {
+                    updateTranslation('ka', `obstacles.${idx}.video`, v);
+                    updateEnglishField('video', v);
+                    showSaved();
+                  }} />
+                  <BilingualField
+                    label="Description"
+                    ka={item.description}
+                    en={translatedItem.description || ''}
+                    onChangeKa={(v) => { updateTranslation('ka', `obstacles.${idx}.description`, v); showSaved(); }}
+                    onChangeEn={(v) => updateEnglishField('description', v)}
+                    multiline
+                  />
                   <button onClick={() => {
-                    const newItems = [...items]; newItems.splice(idx, 1);
-                    updateTranslation(lang, 'obstacles', newItems); showSaved();
+                    updateTranslation('ka', 'obstacles', itemsKa.filter((entry) => entry.id !== item.id));
+                    updateTranslation('en', 'obstacles', itemsEn.filter((entry) => entry.id !== item.id));
+                    showSaved();
                   }} className="self-end text-destructive text-xs font-black flex items-center gap-1"><Trash2 size={14} /> Remove</button>
                 </div>
               </details>
-            ))}
+            );})}
             <button onClick={() => {
-              const newItem = { id: `room_${Date.now()}`, name: 'New Room', category: lang === 'ka' ? 'ოთახები' : 'Rooms', image: '', images: ['', '', ''], video: '', link: `#room_${Date.now()}`, description: '' };
-              updateTranslation(lang, 'obstacles', [...items, newItem]); showSaved();
+              const id = `room_${Date.now()}`;
+              const link = `#${id}`;
+              updateTranslation('ka', 'obstacles', [...itemsKa, { id, name: 'ახალი ოთახი', category: 'ოთახები', image: '', images: ['', '', ''], video: '', link, description: '' }]);
+              updateTranslation('en', 'obstacles', [...itemsEn, { id, name: 'New Room', category: 'Rooms', image: '', images: ['', '', ''], video: '', link, description: '' }]);
+              showSaved();
             }} className="flex items-center gap-2 text-primary font-black text-sm"><Plus size={16} /> Add Room</button>
           </div>
         );
       }
       case 'services_ka':
       case 'services_en': {
-        const lang = activeTab.endsWith('_ka') ? 'ka' : 'en' as Language;
-        const items = translations[lang].services;
+        const itemsKa: ServiceItem[] = translations.ka.services;
+        const itemsEn: ServiceItem[] = translations.en.services;
         return (
           <div className="flex flex-col gap-6">
-            <SectionTitle title={`Services (${lang.toUpperCase()})`} />
-            {items.map((item: any, idx: number) => (
-              <details key={idx} className="group border border-primary/20 rounded-2xl overflow-hidden">
+            <SectionTitle title="სერვისები / Services" desc="Add translations side by side. Images, video, and price are shared between both languages." />
+            {itemsKa.map((item: ServiceItem, idx: number) => {
+              const enIdx = itemsEn.findIndex((candidate) => candidate.id === item.id);
+              const translatedItem: Partial<ServiceItem> = enIdx >= 0 ? itemsEn[enIdx] : {};
+              const updateEnglishField = (field: keyof ServiceItem, value: string | string[]) => {
+                const targetIndex = enIdx >= 0 ? enIdx : ensureEnglishItem('services', item);
+                updateTranslation('en', `services.${targetIndex}.${field}`, value);
+                showSaved();
+              };
+              const updateSharedImages = (imageIndex: number, value: string) => {
+                const images = [...(item.images || ['', '', ''])];
+                images[imageIndex] = value;
+                updateTranslation('ka', `services.${idx}.images`, images);
+                updateEnglishField('images', images);
+                showSaved();
+              };
+              return (
+              <details key={item.id} className="group border border-primary/20 rounded-2xl overflow-hidden">
                 <summary className="p-4 font-black text-foreground cursor-pointer flex justify-between items-center bg-muted/30 hover:bg-muted/50">
-                  {item.name} - {item.price} <ChevronDown size={18} className="group-open:rotate-180 transition-transform text-primary" />
+                  {item.name} / {translatedItem.name || 'English translation needed'} - {item.price} <ChevronDown size={18} className="group-open:rotate-180 transition-transform text-primary" />
                 </summary>
                 <div className="p-4 flex flex-col gap-3">
-                  <InputField label="Name" value={item.name} onChange={(v) => { updateTranslation(lang, `services.${idx}.name`, v); showSaved(); }} />
-                  <InputField label="Price" value={item.price || ''} onChange={(v) => { updateTranslation(lang, `services.${idx}.price`, v); showSaved(); }} />
-                  <InputField label="Main Image URL" value={item.image} onChange={(v) => { updateTranslation(lang, `services.${idx}.image`, v); showSaved(); }} />
-                  <InputField label="Image 2 URL" value={(item.images && item.images[0]) || ''} onChange={(v) => { const imgs = [...(item.images || ['', '', ''])]; imgs[0] = v; updateTranslation(lang, `services.${idx}.images`, imgs); showSaved(); }} />
-                  <InputField label="Image 3 URL" value={(item.images && item.images[1]) || ''} onChange={(v) => { const imgs = [...(item.images || ['', '', ''])]; imgs[1] = v; updateTranslation(lang, `services.${idx}.images`, imgs); showSaved(); }} />
-                  <InputField label="Image 4 URL" value={(item.images && item.images[2]) || ''} onChange={(v) => { const imgs = [...(item.images || ['', '', ''])]; imgs[2] = v; updateTranslation(lang, `services.${idx}.images`, imgs); showSaved(); }} />
-                  <InputField label="Video URL" value={item.video || ''} onChange={(v) => { updateTranslation(lang, `services.${idx}.video`, v); showSaved(); }} />
-                  <InputField label="Description" value={item.description} onChange={(v) => { updateTranslation(lang, `services.${idx}.description`, v); showSaved(); }} multiline />
+                  <BilingualField
+                    label="Name"
+                    ka={item.name}
+                    en={translatedItem.name || ''}
+                    onChangeKa={(v) => { updateTranslation('ka', `services.${idx}.name`, v); showSaved(); }}
+                    onChangeEn={(v) => updateEnglishField('name', v)}
+                  />
+                  <BilingualField
+                    label="Category"
+                    ka={item.category}
+                    en={translatedItem.category || ''}
+                    onChangeKa={(v) => { updateTranslation('ka', `services.${idx}.category`, v); showSaved(); }}
+                    onChangeEn={(v) => updateEnglishField('category', v)}
+                  />
+                  <InputField label="Price · shared" value={item.price || ''} onChange={(v) => {
+                    updateTranslation('ka', `services.${idx}.price`, v);
+                    updateEnglishField('price', v);
+                    showSaved();
+                  }} />
+                  <InputField label="Main Image URL · shared" value={item.image} onChange={(v) => {
+                    updateTranslation('ka', `services.${idx}.image`, v);
+                    updateEnglishField('image', v);
+                    showSaved();
+                  }} />
+                  {[0, 1, 2].map((imageIndex) => (
+                    <InputField key={imageIndex} label={`Image ${imageIndex + 2} URL · shared`} value={item.images?.[imageIndex] || ''} onChange={(v) => updateSharedImages(imageIndex, v)} />
+                  ))}
+                  <InputField label="Video URL · shared" value={item.video || ''} onChange={(v) => {
+                    updateTranslation('ka', `services.${idx}.video`, v);
+                    updateEnglishField('video', v);
+                    showSaved();
+                  }} />
+                  <BilingualField
+                    label="Description"
+                    ka={item.description}
+                    en={translatedItem.description || ''}
+                    onChangeKa={(v) => { updateTranslation('ka', `services.${idx}.description`, v); showSaved(); }}
+                    onChangeEn={(v) => updateEnglishField('description', v)}
+                    multiline
+                  />
                   <button onClick={() => {
-                    const newItems = [...items]; newItems.splice(idx, 1);
-                    updateTranslation(lang, 'services', newItems); showSaved();
+                    updateTranslation('ka', 'services', itemsKa.filter((entry) => entry.id !== item.id));
+                    updateTranslation('en', 'services', itemsEn.filter((entry) => entry.id !== item.id));
+                    showSaved();
                   }} className="self-end text-destructive text-xs font-black flex items-center gap-1"><Trash2 size={14} /> Remove</button>
                 </div>
               </details>
-            ))}
+            );})}
             <button onClick={() => {
-              const newItem = { id: `svc_${Date.now()}`, name: 'New Service', price: '0₾', category: lang === 'ka' ? 'სერვისები' : 'Services', image: '', images: ['', '', ''], video: '', link: `#svc_${Date.now()}`, description: '' };
-              updateTranslation(lang, 'services', [...items, newItem]); showSaved();
+              const id = `svc_${Date.now()}`;
+              const link = `#${id}`;
+              updateTranslation('ka', 'services', [...itemsKa, { id, name: 'ახალი სერვისი', price: '0₾', category: 'სერვისები', image: '', images: ['', '', ''], video: '', link, description: '' }]);
+              updateTranslation('en', 'services', [...itemsEn, { id, name: 'New Service', price: '0₾', category: 'Services', image: '', images: ['', '', ''], video: '', link, description: '' }]);
+              showSaved();
             }} className="flex items-center gap-2 text-primary font-black text-sm"><Plus size={16} /> Add Service</button>
           </div>
         );
       }
       case 'pricing_ka':
       case 'pricing_en': {
-        const lang = activeTab.endsWith('_ka') ? 'ka' : 'en' as Language;
-        const items = translations[lang].pricing;
+        const itemsKa = translations.ka.pricing;
+        const itemsEn = translations.en.pricing;
         return (
           <div className="flex flex-col gap-6">
-            <SectionTitle title={`Pricing (${lang.toUpperCase()})`} />
-            {items.map((pkg: any, idx: number) => (
+            <SectionTitle title="ფასები / Pricing" />
+            {itemsKa.map((pkg: any, idx: number) => {
+              const translatedPackage = itemsEn[idx] || {};
+              return (
               <details key={idx} className="group border border-primary/20 rounded-2xl overflow-hidden">
                 <summary className="p-4 font-black text-foreground cursor-pointer flex justify-between items-center bg-muted/30 hover:bg-muted/50">
-                  {pkg.title} - {pkg.price} <ChevronDown size={18} className="group-open:rotate-180 transition-transform text-primary" />
+                  {pkg.title} / {translatedPackage.title || 'English translation needed'} - {pkg.price} <ChevronDown size={18} className="group-open:rotate-180 transition-transform text-primary" />
                 </summary>
                 <div className="p-4 flex flex-col gap-3">
-                  <InputField label="Title" value={pkg.title} onChange={(v) => { updateTranslation(lang, `pricing.${idx}.title`, v); showSaved(); }} />
-                  <InputField label="Price" value={pkg.price} onChange={(v) => { updateTranslation(lang, `pricing.${idx}.price`, v); showSaved(); }} />
+                  <BilingualField
+                    label="Title"
+                    ka={pkg.title}
+                    en={translatedPackage.title || ''}
+                    onChangeKa={(v) => { updateTranslation('ka', `pricing.${idx}.title`, v); showSaved(); }}
+                    onChangeEn={(v) => { updateTranslation('en', `pricing.${idx}.title`, v); showSaved(); }}
+                  />
+                  <InputField label="Price · shared" value={pkg.price} onChange={(v) => updateBothLanguages(`pricing.${idx}.price`, v)} />
                   <div className="flex items-center gap-3">
                     <label className="text-xs font-black uppercase text-muted-foreground">Recommended</label>
-                    <input type="checkbox" checked={!!pkg.recommended} onChange={(e) => { updateTranslation(lang, `pricing.${idx}.recommended`, e.target.checked); showSaved(); }} />
+                    <input type="checkbox" checked={!!pkg.recommended} onChange={(e) => updateBothLanguages(`pricing.${idx}.recommended`, e.target.checked)} />
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Features (one per line)</label>
-                    <textarea value={(pkg.features || []).join('\n')} onChange={(e) => { updateTranslation(lang, `pricing.${idx}.features`, e.target.value.split('\n')); showSaved(); }} rows={5}
-                      className="w-full p-3 rounded-xl bg-muted border border-primary/20 text-foreground text-sm focus:outline-none focus:border-primary" />
-                  </div>
+                  <BilingualField
+                    label="Features · one per line"
+                    ka={(pkg.features || []).join('\n')}
+                    en={(translatedPackage.features || []).join('\n')}
+                    onChangeKa={(v) => { updateTranslation('ka', `pricing.${idx}.features`, v.split('\n')); showSaved(); }}
+                    onChangeEn={(v) => { updateTranslation('en', `pricing.${idx}.features`, v.split('\n')); showSaved(); }}
+                    multiline
+                  />
                   <button onClick={() => {
-                    const newItems = [...items]; newItems.splice(idx, 1);
-                    updateTranslation(lang, 'pricing', newItems); showSaved();
+                    const newItemsKa = [...itemsKa]; newItemsKa.splice(idx, 1);
+                    const newItemsEn = [...itemsEn]; newItemsEn.splice(idx, 1);
+                    updateTranslation('ka', 'pricing', newItemsKa);
+                    updateTranslation('en', 'pricing', newItemsEn);
+                    showSaved();
                   }} className="self-end text-destructive text-xs font-black flex items-center gap-1"><Trash2 size={14} /> Remove</button>
                 </div>
               </details>
-            ))}
+            );})}
             <button onClick={() => {
-              updateTranslation(lang, 'pricing', [...items, { title: 'New Session', price: '0₾', features: ['Feature 1'] }]); showSaved();
+              updateTranslation('ka', 'pricing', [...itemsKa, { title: 'ახალი სესია', price: '0₾', features: ['ახალი პუნქტი'] }]);
+              updateTranslation('en', 'pricing', [...itemsEn, { title: 'New Session', price: '0₾', features: ['New feature'] }]);
+              showSaved();
             }} className="flex items-center gap-2 text-primary font-black text-sm"><Plus size={16} /> Add Package</button>
           </div>
         );
       }
       case 'menu_ka':
       case 'menu_en': {
-        const lang = activeTab.endsWith('_ka') ? 'ka' : 'en' as Language;
-        const menu = translations[lang].menu;
+        const menuKa = translations.ka.menu;
+        const menuEn = translations.en.menu;
         return (
           <div className="flex flex-col gap-6">
-            <SectionTitle title={`Menu (${lang.toUpperCase()})`} />
-            {Object.entries(menu).map(([key, cat]: [string, any]) => (
+            <SectionTitle title="მენიუ / Menu" desc="Both languages stay visible. Add menu items in the appropriate language column." />
+            {Object.entries(menuKa).map(([key, catKa]: [string, any]) => {
+              const catEn = menuEn[key] || { title: '', items: [] };
+              return (
               <details key={key} className="group border border-primary/20 rounded-2xl overflow-hidden">
                 <summary className="p-4 font-black text-foreground cursor-pointer flex justify-between items-center bg-muted/30 hover:bg-muted/50">
-                  {cat.title} ({cat.items.length} items) <ChevronDown size={18} className="group-open:rotate-180 transition-transform text-primary" />
+                  {catKa.title} / {catEn.title} <ChevronDown size={18} className="group-open:rotate-180 transition-transform text-primary" />
                 </summary>
                 <div className="p-4 flex flex-col gap-4">
-                  <InputField label="Category Title" value={cat.title} onChange={(v) => { updateTranslation(lang, `menu.${key}.title`, v); showSaved(); }} />
-                  {cat.items.map((item: any, i: number) => (
-                    <div key={i} className="flex gap-2 items-end p-3 bg-muted/30 rounded-xl">
-                      <div className="flex-1"><InputField label={`Item ${i + 1}`} value={item.name} onChange={(v) => { updateTranslation(lang, `menu.${key}.items.${i}.name`, v); showSaved(); }} /></div>
-                      <div className="w-24"><InputField label="Price" value={item.price} onChange={(v) => { updateTranslation(lang, `menu.${key}.items.${i}.price`, v); showSaved(); }} /></div>
-                      <button onClick={() => {
-                        const newItems = [...cat.items]; newItems.splice(i, 1);
-                        updateTranslation(lang, `menu.${key}.items`, newItems); showSaved();
-                      }} className="pb-3 text-destructive"><Trash2 size={14} /></button>
-                    </div>
-                  ))}
-                  <button onClick={() => {
-                    updateTranslation(lang, `menu.${key}.items`, [...cat.items, { name: 'New Item', price: '0₾' }]); showSaved();
-                  }} className="flex items-center gap-2 text-primary font-black text-xs"><Plus size={14} /> Add Item</button>
+                  <BilingualField
+                    label="Category Title"
+                    ka={catKa.title}
+                    en={catEn.title}
+                    onChangeKa={(v) => { updateTranslation('ka', `menu.${key}.title`, v); showSaved(); }}
+                    onChangeEn={(v) => { updateTranslation('en', `menu.${key}.title`, v); showSaved(); }}
+                  />
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    {([
+                      { language: 'ka' as Language, label: 'ქართული', category: catKa },
+                      { language: 'en' as Language, label: 'English', category: catEn },
+                    ]).map(({ language, label, category }) => (
+                      <div key={language} className="flex flex-col gap-3 rounded-xl border border-primary/10 p-3">
+                        <h3 className="text-sm font-bold text-primary">{label}</h3>
+                        {category.items.map((item: any, i: number) => (
+                          <div key={i} className="flex items-end gap-2 rounded-xl bg-muted/30 p-3">
+                            <div className="min-w-0 flex-1"><InputField label={`Item ${i + 1}`} value={item.name} onChange={(v) => { updateTranslation(language, `menu.${key}.items.${i}.name`, v); showSaved(); }} /></div>
+                            <div className="w-24 shrink-0"><InputField label="Price" value={item.price} onChange={(v) => { updateTranslation(language, `menu.${key}.items.${i}.price`, v); showSaved(); }} /></div>
+                            <button onClick={() => {
+                              const newItems = [...category.items]; newItems.splice(i, 1);
+                              updateTranslation(language, `menu.${key}.items`, newItems); showSaved();
+                            }} aria-label={`Remove ${label} item ${i + 1}`} className="pb-3 text-destructive"><Trash2 size={14} /></button>
+                          </div>
+                        ))}
+                        <button onClick={() => {
+                          updateTranslation(language, `menu.${key}.items`, [...category.items, { name: language === 'ka' ? 'ახალი პროდუქტი' : 'New Item', price: '0₾' }]); showSaved();
+                        }} className="flex items-center gap-2 text-left text-xs font-black text-primary"><Plus size={14} /> Add Item · {label}</button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </details>
-            ))}
+            );})}
           </div>
         );
       }
       case 'faq_ka':
       case 'faq_en': {
-        const lang = activeTab.endsWith('_ka') ? 'ka' : 'en' as Language;
-        const faq = translations[lang].faq;
+        const faqKa = translations.ka.faq;
+        const faqEn = translations.en.faq;
         return (
           <div className="flex flex-col gap-6">
-            <SectionTitle title={`FAQ (${lang.toUpperCase()})`} />
-            {faq.map((item: any, idx: number) => (
+            <SectionTitle title="ხშირი კითხვები / FAQ" />
+            {faqKa.map((item: any, idx: number) => (
               <div key={idx} className="p-4 rounded-2xl bg-muted/30 border border-primary/10 flex flex-col gap-3">
-                <InputField label="Question" value={item.question} onChange={(v) => { updateTranslation(lang, `faq.${idx}.question`, v); showSaved(); }} />
-                <InputField label="Answer" value={item.answer} onChange={(v) => { updateTranslation(lang, `faq.${idx}.answer`, v); showSaved(); }} multiline />
+                <BilingualField
+                  label={`Question ${idx + 1}`}
+                  ka={item.question}
+                  en={faqEn[idx]?.question || ''}
+                  onChangeKa={(v) => { updateTranslation('ka', `faq.${idx}.question`, v); showSaved(); }}
+                  onChangeEn={(v) => { updateTranslation('en', `faq.${idx}.question`, v); showSaved(); }}
+                />
+                <BilingualField
+                  label="Answer"
+                  ka={item.answer}
+                  en={faqEn[idx]?.answer || ''}
+                  onChangeKa={(v) => { updateTranslation('ka', `faq.${idx}.answer`, v); showSaved(); }}
+                  onChangeEn={(v) => { updateTranslation('en', `faq.${idx}.answer`, v); showSaved(); }}
+                  multiline
+                />
                 <button onClick={() => {
-                  const newFaq = [...faq]; newFaq.splice(idx, 1);
-                  updateTranslation(lang, 'faq', newFaq); showSaved();
+                  const newFaqKa = [...faqKa]; newFaqKa.splice(idx, 1);
+                  const newFaqEn = [...faqEn]; newFaqEn.splice(idx, 1);
+                  updateTranslation('ka', 'faq', newFaqKa);
+                  updateTranslation('en', 'faq', newFaqEn);
+                  showSaved();
                 }} className="self-end text-destructive text-xs font-black flex items-center gap-1"><Trash2 size={14} /> Remove</button>
               </div>
             ))}
             <button onClick={() => {
-              updateTranslation(lang, 'faq', [...faq, { question: 'New Question?', answer: 'Answer here.' }]); showSaved();
+              updateTranslation('ka', 'faq', [...faqKa, { question: 'ახალი კითხვა?', answer: 'პასუხი აქ.' }]);
+              updateTranslation('en', 'faq', [...faqEn, { question: 'New Question?', answer: 'Answer here.' }]);
+              showSaved();
             }} className="flex items-center gap-2 text-primary font-black text-sm"><Plus size={16} /> Add FAQ</button>
           </div>
         );
       }
       case 'rules_ka':
       case 'rules_en': {
-        const lang = activeTab.endsWith('_ka') ? 'ka' : 'en' as Language;
-        const rules = translations[lang].rules;
+        const rulesKa = translations.ka.rules;
+        const rulesEn = translations.en.rules;
         return (
           <div className="flex flex-col gap-6">
-            <SectionTitle title={`Rules (${lang.toUpperCase()})`} />
-            {rules.map((rule: string, idx: number) => (
+            <SectionTitle title="წესები / Rules" />
+            {rulesKa.map((rule: string, idx: number) => (
               <div key={idx} className="flex gap-3 items-start">
                 <span className="text-primary font-black text-lg shrink-0 mt-3">{idx + 1}.</span>
-                <div className="flex-1"><InputField label={`Rule ${idx + 1}`} value={rule} onChange={(v) => { updateTranslation(lang, `rules.${idx}`, v); showSaved(); }} multiline /></div>
+                <div className="flex-1">
+                  <BilingualField
+                    label={`Rule ${idx + 1}`}
+                    ka={rule}
+                    en={rulesEn[idx] || ''}
+                    onChangeKa={(v) => { updateTranslation('ka', `rules.${idx}`, v); showSaved(); }}
+                    onChangeEn={(v) => { updateTranslation('en', `rules.${idx}`, v); showSaved(); }}
+                    multiline
+                  />
+                </div>
                 <button onClick={() => {
-                  const newRules = [...rules]; newRules.splice(idx, 1);
-                  updateTranslation(lang, 'rules', newRules); showSaved();
+                  const newRulesKa = [...rulesKa]; newRulesKa.splice(idx, 1);
+                  const newRulesEn = [...rulesEn]; newRulesEn.splice(idx, 1);
+                  updateTranslation('ka', 'rules', newRulesKa);
+                  updateTranslation('en', 'rules', newRulesEn);
+                  showSaved();
                 }} className="mt-8 text-destructive"><Trash2 size={14} /></button>
               </div>
             ))}
             <button onClick={() => {
-              updateTranslation(lang, 'rules', [...rules, `${rules.length + 1}. New rule`]); showSaved();
+              updateTranslation('ka', 'rules', [...rulesKa, `${rulesKa.length + 1}. ახალი წესი`]);
+              updateTranslation('en', 'rules', [...rulesEn, `${rulesEn.length + 1}. New rule`]);
+              showSaved();
             }} className="flex items-center gap-2 text-primary font-black text-sm"><Plus size={16} /> Add Rule</button>
           </div>
         );
