@@ -213,7 +213,7 @@ const Nav = ({ onNavigate, lang, setLang, currentHash }: {
 const HeroComp = ({ onNavigate, lang }: { onNavigate: (hash: string) => void; lang: Language }) => {
   const heroVideo = useContentStore((s) => s.assets.heroVideo);
   const heroFallback = useContentStore((s) => s.assets.heroFallback);
-  const t = useContentStore((s) => s.translations[lang].ui);
+  const t = useContentStore((s) => s.translations[lang]);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
