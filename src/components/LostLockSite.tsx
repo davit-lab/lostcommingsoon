@@ -525,15 +525,15 @@ const LostLockSite: React.FC = () => {
         return (
           <div className="py-12 md:py-24 px-4 md:px-14 max-w-[1400px] mx-auto min-h-screen">
             <PageHeader title={t.ui.menuTitle} description={t.ui.menuDesc} ui={t.ui} onBack={() => navigateTo('#')} />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 mt-12">
+            <div className="grid grid-cols-1 items-start md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-12">
               {Object.entries(t.menu).map(([key, cat]: [string, any]) => (
-                <div key={key} className="p-8 md:p-10 rounded-[24px] bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 shadow-xl flex flex-col">
-                  <h2 className="text-2xl md:text-3xl font-black tracking-tighter uppercase mb-10 text-primary">{cat.title}</h2>
-                  <div className="flex flex-col gap-4">
+                <div key={key} className="h-fit self-start p-6 md:p-8 rounded-[24px] bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 shadow-xl flex flex-col">
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase mb-5 text-primary">{cat.title}</h2>
+                  <div className="flex flex-col">
                     {cat.items.map((item: any, i: number) => (
-                      <div key={i} className="flex justify-between items-center py-4 border-b border-zinc-800 last:border-0 hover:bg-zinc-800 px-2 rounded-xl transition-colors">
-                        <span className="text-lg md:text-xl font-bold text-muted-foreground">{item.name}</span>
-                        <span className="text-lg md:text-xl font-black text-primary shrink-0 ml-4">{item.price}</span>
+                      <div key={i} className="flex items-center justify-between gap-3 py-3 px-2 border-b border-zinc-800 last:border-0 hover:bg-zinc-800 rounded-xl transition-colors">
+                        <span className="min-w-0 text-base md:text-lg leading-snug font-semibold text-muted-foreground">{item.name}</span>
+                        <span className="shrink-0 text-base md:text-lg font-black text-primary">{item.price}</span>
                       </div>
                     ))}
                   </div>
