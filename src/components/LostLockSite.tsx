@@ -525,7 +525,7 @@ const LostLockSite: React.FC = () => {
         {
           const menuEntries = Object.entries(t.menu) as [string, any][];
           const renderMenuCard = ([key, cat]: [string, any]) => (
-            <div key={key} className="h-fit self-start p-6 md:p-8 rounded-[24px] bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 shadow-xl">
+            <div key={key} className="h-fit w-full self-start p-6 md:p-8 rounded-[24px] bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 shadow-xl">
               <h2 className="text-xl md:text-2xl font-black tracking-tight uppercase mb-5 text-primary">{cat.title}</h2>
               <div className="flex flex-col">
                 {cat.items.map((item: any, i: number) => (
