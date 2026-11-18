@@ -11,9 +11,19 @@ import { REELS_SECTION_TITLE } from '@/config/reels';
 import { getFramerImageProps, optimizeFramerImageUrl } from '@/lib/framerImages';
 
 const Logo = ({ className = "w-10 h-10" }: { className?: string }) => {
-  const { assets } = useContentStore();
-  if (assets.logo) {
-    return <img {...getFramerImageProps(assets.logo, 300)} alt="Lost Lock Logo" className={`${className} object-contain`} width={56} height={56} decoding="async" />;
+  const logo = useContentStore((s) => s.assets.logo);
+  if (logo) {
+    return (
+      <img
+        {...getFramerImageProps(logo, 300)}
+        alt="Lost Lock Logo"
+        className={`${className} object-contain`}
+        sizes="56px"
+        width={56}
+        height={56}
+        decoding="async"
+      />
+    );
   }
   return (
     <svg viewBox="0 0 100 125" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -70,8 +80,7 @@ const Nav = ({ onNavigate, lang, setLang, currentHash }: {
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const { translations } = useContentStore();
-  const t = translations[lang];
+  const t = useContentStore((s) => s.translations[lang]);
   const navLabel = lang === 'ka' ? 'მთავარი ნავიგაცია' : 'Main navigation';
   const activeHref = (href: string) => {
     if (href === '#') return currentHash === '#';
@@ -202,17 +211,20 @@ const Nav = ({ onNavigate, lang, setLang, currentHash }: {
 };
 
 const HeroComp = ({ onNavigate, lang }: { onNavigate: (hash: string) => void; lang: Language }) => {
-  const { assets, translations } = useContentStore();
-  const t = translations[lang];
+  const heroVideo = useContentStore((s) => s.assets.heroVideo);
+  const heroFallback = useContentStore((s) => s.assets.heroFallback);
+  const t = useContentStore((s) => s.translations[lang].ui);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !('IntersectionObserver' in window)) return;
+    if (!video || typeof IntersectionObserver === 'undefined') return;
 
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        video.play().catch(console.error);
+        if (video.paused) {
+          void video.play().catch((error) => console.error('[hero] playback failed', error));
+        }
       } else {
         video.pause();
       }
@@ -224,7 +236,7 @@ const HeroComp = ({ onNavigate, lang }: { onNavigate: (hash: string) => void; la
 
   return (
     <section className="relative w-full min-h-[500px] md:h-[600px] overflow-hidden mt-2 md:mt-4 rounded-[32px] md:rounded-[48px] mx-auto max-w-[1400px] shadow-2xl border border-zinc-800">
-      <video ref={videoRef} src={assets.heroVideo} autoPlay loop muted playsInline poster={assets.heroFallback} preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
+      <video ref={videoRef} src={heroVideo} autoPlay loop muted playsInline poster={heroFallback} preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/50 flex flex-col justify-end p-6 md:p-20">
         <div className="flex flex-col gap-4 md:gap-6 max-w-4xl">
           <h1 className="text-5xl md:text-[120px] font-vintage text-foreground tracking-normal leading-[0.9] md:leading-[0.85] uppercase drop-shadow-2xl">Lost Lock</h1>
@@ -249,7 +261,7 @@ const CardComp: React.FC<{ item: ServiceItem; onClick: () => void; lang: Languag
   return (
     <motion.div whileHover={{ y: -12 }} onClick={onClick} className="group flex flex-col gap-4 md:gap-8 cursor-pointer w-full relative">
       <div className="relative aspect-square overflow-hidden rounded-[24px] md:rounded-[32px] border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
-        <img {...getFramerImageProps(item.image, 600)} sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 400px" alt={item.name} className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" loading="lazy" decoding="async" width={400} height={400} />
+        <img {...getFramerImageProps(item.image, 600)} sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw" alt={item.name} className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" loading="lazy" decoding="async" width={400} height={400} />
         <button onClick={handleShare} className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-zinc-900/60 backdrop-blur-sm border border-zinc-800/50 text-primary hover:bg-primary hover:text-primary-foreground transition-all">
           <AnimatePresence mode="wait">
             {copied ? <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}><Check size={15} /></motion.div> : <Share2 size={15} />}
@@ -375,7 +387,8 @@ const PageHeader = ({ title, description, onBack, ui }: { title: string; descrip
 );
 
 const LostLockSite: React.FC = () => {
-  const { assets, translations } = useContentStore();
+  const backgroundColor = useContentStore((s) => s.assets.bgColor);
+  const translations = useContentStore((s) => s.translations);
   const [lang, setLang] = useState<Language>(() => {
     const saved = localStorage.getItem('lang');
     return (saved === 'ka' || saved === 'en') ? saved : 'ka';
@@ -425,7 +438,14 @@ const LostLockSite: React.FC = () => {
               <ProductImageSlider key={itemMatch.id} item={itemMatch} lang={lang} />
               {itemMatch.video && (
                 <div className="relative aspect-video rounded-[24px] md:rounded-[40px] border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm shadow-xl">
-                  <video src={itemMatch.video} poster={optimizeFramerImageUrl(itemMatch.image, 1400)} controls playsInline preload="none" className="w-full h-full object-contain bg-black rounded-[24px] md:rounded-[40px]" />
+                  <video
+                    src={itemMatch.video}
+                    poster={optimizeFramerImageUrl(itemMatch.image, 1400)}
+                    controls
+                    playsInline
+                    preload="none"
+                    className="w-full h-full object-contain bg-black rounded-[24px] md:rounded-[40px]"
+                  />
                 </div>
               )}
             </div>
@@ -649,7 +669,7 @@ const LostLockSite: React.FC = () => {
     <div
       className="min-h-screen relative flex flex-col selection:bg-primary selection:text-primary-foreground overflow-x-hidden"
       style={{
-        backgroundColor: assets.bgColor || undefined,
+        backgroundColor: backgroundColor || undefined,
         backgroundImage: `url(${import.meta.env.BASE_URL}background.jpg)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',

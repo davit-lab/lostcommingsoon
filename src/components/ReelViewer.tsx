@@ -195,8 +195,18 @@ const ReelSlide: React.FC<ReelSlideProps> = ({
       <div className="relative mx-auto flex h-full w-full items-center justify-center">
         <div className="relative aspect-[9/16] h-full w-full max-h-[100dvh] bg-black md:aspect-[9/16] md:h-[92dvh] md:max-h-none md:w-auto md:max-w-full md:shrink-0 md:overflow-hidden md:rounded-[32px] md:shadow-2xl">
           {/* poster while buffering or on failure */}
-          {!failed && (
-            <img {...getFramerImageProps(reel.thumbnail, 1400)} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          {(!src || failed) && (
+            <img
+              {...(src
+                ? { src: optimizeFramerImageUrl(reel.thumbnail, 1400) }
+                : getFramerImageProps(reel.thumbnail, 1400))}
+              alt=""
+              aria-hidden="true"
+              sizes="(min-width: 768px) 50vh, 100vw"
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           )}
           {src && (
             <video
@@ -206,7 +216,7 @@ const ReelSlide: React.FC<ReelSlideProps> = ({
               loop
               muted={muted}
               playsInline
-              preload={active ? 'auto' : 'none'}
+              preload={playing ? 'auto' : 'none'}
               autoPlay={false}
               onError={() => setFailed(true)}
               onWaiting={() => setBuffering(true)}

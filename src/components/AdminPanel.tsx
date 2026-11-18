@@ -14,7 +14,7 @@ const AdminLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useContentStore();
+  const login = useContentStore((s) => s.login);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +130,12 @@ const SectionTitle: React.FC<{ title: string; desc?: string }> = ({ title, desc 
 );
 
 const AdminDashboard: React.FC = () => {
-  const { assets, translations, updateAssets, updateTranslation, logout, resetToDefault } = useContentStore();
+  const assets = useContentStore((s) => s.assets);
+  const translations = useContentStore((s) => s.translations);
+  const updateAssets = useContentStore((s) => s.updateAssets);
+  const updateTranslation = useContentStore((s) => s.updateTranslation);
+  const logout = useContentStore((s) => s.logout);
+  const resetToDefault = useContentStore((s) => s.resetToDefault);
   const [activeTab, setActiveTab] = useState<Tab>('today');
   const [saved, setSaved] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -273,7 +278,7 @@ const AdminDashboard: React.FC = () => {
                 <h3 className="text-lg font-black text-foreground uppercase tracking-wide">Logo</h3>
                 {assets.logo && (
                   <div className="w-20 h-20 rounded-xl bg-background border border-primary/20 flex items-center justify-center overflow-hidden">
-                    <img {...getFramerImageProps(assets.logo, 300)} alt="Logo preview" className="max-w-full max-h-full object-contain" decoding="async" width={80} height={80} />
+                    <img {...getFramerImageProps(assets.logo, 300)} alt="Logo preview" className="max-w-full max-h-full object-contain" sizes="80px" decoding="async" width={80} height={80} />
                   </div>
                 )}
               </div>
@@ -823,7 +828,7 @@ const AdminDashboard: React.FC = () => {
 };
 
 const AdminPanel: React.FC = () => {
-  const { isAuthenticated } = useContentStore();
+  const isAuthenticated = useContentStore((s) => s.isAuthenticated);
   const [loggedIn, setLoggedIn] = useState(isAuthenticated);
 
   if (!loggedIn) {

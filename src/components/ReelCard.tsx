@@ -17,7 +17,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel, onOpen }) => (
   >
     <img
       {...getFramerImageProps(reel.thumbnail, 600)}
-      sizes="(max-width: 640px) 62vw, 280px"
+      sizes="(min-width: 768px) 270px, 62vw"
       alt=""
       loading="lazy"
       decoding="async"

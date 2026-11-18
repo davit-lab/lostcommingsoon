@@ -276,7 +276,7 @@ const ReelsAdmin: React.FC = () => {
               </div>
               {row.thumbnail && (
                 <div className="flex items-center gap-3 mt-1">
-                  <img {...getFramerImageProps(row.thumbnail, 300)} alt="" className="h-16 w-12 object-cover rounded-lg bg-black border border-zinc-800" loading="lazy" decoding="async" width={48} height={64} />
+                  <img {...getFramerImageProps(row.thumbnail, 300)} alt="" sizes="48px" className="h-16 w-12 object-cover rounded-lg bg-black border border-zinc-800" loading="lazy" decoding="async" width={48} height={64} />
                   <span className="text-[10px] text-muted-foreground truncate">{row.thumbnail}</span>
                 </div>
               )}
