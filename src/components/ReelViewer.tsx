@@ -4,6 +4,7 @@ import { Heart, Share2, X, Play, Check, Volume2, VolumeX, Loader2, Home, Externa
 import { Reel } from '@/types';
 import { readLikedState, persistLikedState, syncReelLike } from '@/lib/reelLikes';
 import { REELS_COPIED_LABEL, REELS_SHARE_LABEL } from '@/config/reels';
+import { getFramerImageProps, optimizeFramerImageUrl } from '@/lib/framerImages';
 
 interface ReelViewerProps {
   reels: Reel[];
@@ -102,13 +103,13 @@ interface ReelSlideProps {
 }
 
 const ReelSlide: React.FC<ReelSlideProps> = ({
-  reel, index, total, active, nearby, liked, likes, muted, onToggleLike, onClose, onGoHome, onToggleMuted,
+  reel, index, total, active, liked, likes, muted, onToggleLike, onClose, onGoHome, onToggleMuted,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [failed, setFailed] = useState(false);
   const [buffering, setBuffering] = useState(true);
   const [playing, setPlaying] = useState(false);
-  const src = active || nearby ? reel.video : undefined;
+  const src = active ? reel.video : undefined;
 
   // Reset per-reel state when switching
   useEffect(() => {
@@ -131,16 +132,19 @@ const ReelSlide: React.FC<ReelSlideProps> = ({
       const p = v.play();
       if (p) p.then(() => setPlaying(true)).catch(() => setFailed(true));
     };
-    const tryPlay = () => {
-      v.muted = muted;
-      if (v.readyState >= 2) {
-        onLoaded();
-      } else {
-        v.addEventListener('loadeddata', onLoaded);
-      }
-    };
-    tryPlay();
-    return () => v.removeEventListener('loadeddata', onLoaded);
+    v.muted = muted;
+    if (v.readyState >= 2) {
+      onLoaded();
+    } else {
+      const onLoadedData = () => {
+        setBuffering(false);
+        v.removeEventListener('loadeddata', onLoadedData);
+      };
+      v.addEventListener('loadeddata', onLoadedData);
+      const p = v.play();
+      if (p) p.then(() => setPlaying(true)).catch(() => setFailed(true));
+      return () => v.removeEventListener('loadeddata', onLoadedData);
+    }
   }, [active, muted, reel.id]);
 
   // Manual play/pause on tap of the video area.
@@ -192,17 +196,17 @@ const ReelSlide: React.FC<ReelSlideProps> = ({
         <div className="relative aspect-[9/16] h-full w-full max-h-[100dvh] bg-black md:aspect-[9/16] md:h-[92dvh] md:max-h-none md:w-auto md:max-w-full md:shrink-0 md:overflow-hidden md:rounded-[32px] md:shadow-2xl">
           {/* poster while buffering or on failure */}
           {!failed && (
-            <img src={reel.thumbnail} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+            <img {...getFramerImageProps(reel.thumbnail, 1400)} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
           )}
           {src && (
             <video
               ref={videoRef}
               src={src}
-              poster={reel.thumbnail}
+              poster={optimizeFramerImageUrl(reel.thumbnail, 1400)}
               loop
               muted={muted}
               playsInline
-              preload={active ? 'auto' : 'metadata'}
+              preload={active ? 'auto' : 'none'}
               autoPlay={false}
               onError={() => setFailed(true)}
               onWaiting={() => setBuffering(true)}

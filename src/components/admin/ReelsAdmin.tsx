@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, Save, Upload, Loader2, Link2, Image as ImageIcon, GripVertical } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { getFramerImageProps, optimizeFramerImageUrl } from '@/lib/framerImages';
 
 const ADMIN_USER = 'lostlock';
 const ADMIN_PASS = 'lostlock2013';
@@ -250,7 +251,7 @@ const ReelsAdmin: React.FC = () => {
               </div>
               {row.video && (
                 <div className="flex items-center gap-3 mt-1">
-                  <video src={row.video} className="h-16 w-12 object-cover rounded-lg bg-black border border-zinc-800" muted playsInline />
+                  <video src={row.video} poster={optimizeFramerImageUrl(row.thumbnail, 300)} preload="none" className="h-16 w-12 object-cover rounded-lg bg-black border border-zinc-800" muted playsInline />
                   <span className="text-[10px] text-muted-foreground truncate">{row.video}</span>
                 </div>
               )}
@@ -275,7 +276,7 @@ const ReelsAdmin: React.FC = () => {
               </div>
               {row.thumbnail && (
                 <div className="flex items-center gap-3 mt-1">
-                  <img src={row.thumbnail} alt="" className="h-16 w-12 object-cover rounded-lg bg-black border border-zinc-800" />
+                  <img {...getFramerImageProps(row.thumbnail, 300)} alt="" className="h-16 w-12 object-cover rounded-lg bg-black border border-zinc-800" loading="lazy" decoding="async" width={48} height={64} />
                   <span className="text-[10px] text-muted-foreground truncate">{row.thumbnail}</span>
                 </div>
               )}

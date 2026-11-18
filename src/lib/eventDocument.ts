@@ -1,5 +1,6 @@
 import { ASSETS } from '@/constants';
 import { BookingRow, BookingMenuLine, BookingServiceLine, LiveItem } from '@/types';
+import { optimizeFramerImageUrl } from '@/lib/framerImages';
 
 const INK = '#171512';
 const FAINT = '#8A837A';
@@ -199,7 +200,7 @@ ${HEAD_LINKS}
 <body>
   <header class="masthead">
     <div class="brand">
-      ${ASSETS.logo ? `<img src="${ASSETS.logo}" alt="" />` : ''}
+      ${ASSETS.logo ? `<img src="${optimizeFramerImageUrl(ASSETS.logo, 300)}" alt="" />` : ''}
       <div>
         <div class="wordmark serif"><b>LOST LOCK</b></div>
         <div class="caps brand-sub">ღონისძიების სივრცე · თბილისი</div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, Heart } from 'lucide-react';
 import { Reel } from '@/types';
+import { getFramerImageProps } from '@/lib/framerImages';
 
 interface ReelCardProps {
   reel: Reel;
@@ -15,7 +16,8 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel, onOpen }) => (
     className="group relative aspect-[9/16] w-[62vw] max-w-[280px] shrink-0 snap-start overflow-hidden rounded-[24px] md:rounded-[32px] border border-zinc-800/60 bg-zinc-900/40 shadow-2xl text-left transition-all duration-500 hover:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-[230px] md:w-[250px] lg:w-[270px]"
   >
     <img
-      src={reel.thumbnail}
+      {...getFramerImageProps(reel.thumbnail, 600)}
+      sizes="(max-width: 640px) 62vw, 280px"
       alt=""
       loading="lazy"
       decoding="async"

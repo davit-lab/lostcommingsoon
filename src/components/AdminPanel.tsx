@@ -8,6 +8,7 @@ import TodayAdmin from '@/components/admin/TodayAdmin';
 import NotifySettings from '@/components/admin/NotifySettings';
 import CreateEvent from '@/components/admin/CreateEvent';
 import ReelsAdmin from '@/components/admin/ReelsAdmin';
+import { getFramerImageProps } from '@/lib/framerImages';
 
 const AdminLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -272,7 +273,7 @@ const AdminDashboard: React.FC = () => {
                 <h3 className="text-lg font-black text-foreground uppercase tracking-wide">Logo</h3>
                 {assets.logo && (
                   <div className="w-20 h-20 rounded-xl bg-background border border-primary/20 flex items-center justify-center overflow-hidden">
-                    <img src={assets.logo} alt="Logo preview" className="max-w-full max-h-full object-contain" decoding="async" width={80} height={80} />
+                    <img {...getFramerImageProps(assets.logo, 300)} alt="Logo preview" className="max-w-full max-h-full object-contain" decoding="async" width={80} height={80} />
                   </div>
                 )}
               </div>
